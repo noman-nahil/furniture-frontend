@@ -145,8 +145,11 @@ export function MonthlyOrdersChart({ data }: MonthlyOrdersChartProps) {
               }}
               labelStyle={{ color: "#e2e8f0", marginBottom: "0.25rem" }}
               itemStyle={{ color: ACCENT }}
-              formatter={(value: number | string) => {
-                const numericValue = typeof value === "number" ? value : Number.parseFloat(value) || 0;
+              formatter={(value) => {
+                const numericValue =
+                  typeof value === "number"
+                    ? value
+                    : Number.parseFloat(String(value ?? 0)) || 0;
                 return [numericValue.toLocaleString(), "Orders"];
               }}
             />
@@ -162,9 +165,13 @@ export function MonthlyOrdersChart({ data }: MonthlyOrdersChartProps) {
                 dataKey="orders"
                 position="top"
                 style={{ fill: AXIS_TEXT, fontSize: "0.6875rem" }}
-                formatter={(value: number) =>
-                  value > 0 ? value.toLocaleString() : ""
-                }
+                formatter={(value) => {
+                  const numericValue =
+                    typeof value === "number"
+                      ? value
+                      : Number.parseFloat(String(value ?? 0)) || 0;
+                  return numericValue > 0 ? numericValue.toLocaleString() : "";
+                }}
               />
             </Bar>
           </BarChart>

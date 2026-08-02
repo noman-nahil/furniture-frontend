@@ -1,3 +1,5 @@
+import { formatCurrency } from "./formatCurrency";
+
 export type PricedProduct = {
   price: number;
   discount?: number;
@@ -56,8 +58,6 @@ export function discountBadgeLabel(p: PricedProduct): string {
  * Kept for backward compatibility
  */
 export function formatBDT(amount: number): string {
-  // Import at use site to avoid circular dependencies
-  const { formatCurrency } = require("./formatCurrency");
   return formatCurrency(amount);
 }
 

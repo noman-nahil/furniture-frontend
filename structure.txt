@@ -598,8 +598,8 @@ C:.
 |   +---dashboard
 |   |       MonthlyOrdersChart.tsx
 |   |       MonthlyOrdersContainer.tsx
-|   |       Monthlyordersskeleton.tsx
-|   |       Monthlyordersstatus.tsx
+|   |       MonthlyOrdersSkeleton.tsx
+|   |       MonthlyOrdersStatus.tsx
 |   |       MonthlyRevenueChart.tsx
 |   |       MonthlyRevenueContainer.tsx
 |   |       

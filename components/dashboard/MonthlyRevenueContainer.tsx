@@ -6,7 +6,9 @@ import { MonthlyRevenueSkeleton } from "./MonthlyRevenueSkeleton";
 import { DashboardChartStatus } from "./DashboardChartStatus";
 import type { MonthlyRevenueData } from "@/types/monthlyRevenue";
 
-function isMonthlyRevenueDataArray(value: unknown): value is MonthlyRevenueData[] {
+function isMonthlyRevenueDataArray(
+  value: unknown,
+): value is MonthlyRevenueData[] {
   return (
     Array.isArray(value) &&
     value.every(
@@ -20,7 +22,11 @@ function isMonthlyRevenueDataArray(value: unknown): value is MonthlyRevenueData[
   );
 }
 
-async function MonthlyRevenueData({ chartRange }: { chartRange: "year" | "12months" }) {
+async function MonthlyRevenueDataView({
+  chartRange,
+}: {
+  chartRange: "year" | "12months";
+}) {
   const cookieStore = await cookies();
   const baseUrl = process.env.BACKEND_URL;
 
@@ -30,16 +36,20 @@ async function MonthlyRevenueData({ chartRange }: { chartRange: "year" | "12mont
   }
 
   let monthlyData: unknown;
+  let fetchFailed = false;
 
   try {
     const query = chartRange === "12months" ? "?range=12months" : "";
-    const response = await fetch(`${baseUrl}/dashboard/monthly-revenue${query}`, {
-      headers: {
-        Cookie: cookieStore.toString(),
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${baseUrl}/dashboard/monthly-revenue${query}`,
+      {
+        headers: {
+          Cookie: cookieStore.toString(),
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+    );
 
     if (response.status === 401) {
       redirect("/login?reason=session_expired");
@@ -50,12 +60,16 @@ async function MonthlyRevenueData({ chartRange }: { chartRange: "year" | "12mont
         "[MonthlyRevenue] Failed to fetch monthly revenue data:",
         response.statusText,
       );
-      return <DashboardChartStatus variant="error" metricLabel="revenue" />;
+      fetchFailed = true;
+    } else {
+      monthlyData = await response.json();
     }
-
-    monthlyData = await response.json();
   } catch (error) {
     console.error("[MonthlyRevenue] Error fetching monthly revenue data:", error);
+    fetchFailed = true;
+  }
+
+  if (fetchFailed) {
     return <DashboardChartStatus variant="error" metricLabel="revenue" />;
   }
 
@@ -68,7 +82,9 @@ async function MonthlyRevenueData({ chartRange }: { chartRange: "year" | "12mont
     return <DashboardChartStatus variant="empty" metricLabel="revenue" />;
   }
 
-  const hasData = monthlyData.some((item) => item.revenue > 0 || item.orders > 0);
+  const hasData = monthlyData.some(
+    (item) => item.revenue > 0 || item.orders > 0,
+  );
   if (!hasData) {
     return <DashboardChartStatus variant="empty" metricLabel="revenue" />;
   }
@@ -83,7 +99,7 @@ export function MonthlyRevenueContainer({
 }) {
   return (
     <Suspense fallback={<MonthlyRevenueSkeleton />}>
-      <MonthlyRevenueData chartRange={chartRange} />
+      <MonthlyRevenueDataView chartRange={chartRange} />
     </Suspense>
   );
 }

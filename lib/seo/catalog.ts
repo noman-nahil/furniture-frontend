@@ -11,9 +11,25 @@ import { slugify } from "@/lib/slug";
 // CHANGED: description is now a locale object, matching the backend's
 // product.description shape (name/slug already carry this via
 // StoreProduct after the type fix).
+type SeoBlock = {
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+  ogImage?: string;
+  canonicalUrl?: string;
+};
+
 export type ProductForMeta = StoreProduct & {
   description?: LocalizedField;
   category?: string;
+  seo?: Partial<Record<"fr" | "en", SeoBlock>>;
+  structuredData?: {
+    gtin?: string;
+    mpn?: string;
+    brand?: string;
+    condition?: "NewCondition" | "UsedCondition" | "RefurbishedCondition";
+  };
+  noIndex?: boolean;
 };
 
 type ProductApiResponse =

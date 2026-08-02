@@ -47,7 +47,7 @@ const list = useMemo(() => {
 
   const closeBtnRef  = useRef<HTMLButtonElement>(null);
   const imageWrapRef = useRef<HTMLDivElement>(null);
-  const isPanning    = useRef(false);
+  const [isPanning, setIsPanning] = useState(false);
   const panStart     = useRef({ x: 0, y: 0 });
   const panOrigin    = useRef<PanState>({ x: 0, y: 0 });
 
@@ -111,21 +111,23 @@ const list = useMemo(() => {
   // Pan
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if (zoom <= ZOOM_MIN) return;
-    isPanning.current = true;
+    setIsPanning(true);
     panStart.current  = { x: e.clientX, y: e.clientY };
     panOrigin.current = pan;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   }, [zoom, pan]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isPanning.current) return;
+    if (!isPanning) return;
     setPan({
       x: panOrigin.current.x + (e.clientX - panStart.current.x),
       y: panOrigin.current.y + (e.clientY - panStart.current.y),
     });
-  }, []);
+  }, [isPanning]);
 
-  const onPointerUp = useCallback(() => { isPanning.current = false; }, []);
+  const onPointerUp = useCallback(() => {
+    setIsPanning(false);
+  }, []);
 
   // Double-click to zoom
   const onDoubleClick = useCallback(() => {
@@ -229,14 +231,14 @@ const list = useMemo(() => {
         onDoubleClick={onDoubleClick}
         style={{
           cursor: zoom > 1
-            ? (isPanning.current ? "grabbing" : "grab")
+            ? (isPanning ? "grabbing" : "grab")
             : "zoom-in",
         }}
       >
         <div
           style={{
             transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
-            transition: isPanning.current
+            transition: isPanning
               ? "none"
               : "transform 0.22s cubic-bezier(0.22,1,0.36,1)",
             transformOrigin: "center center",

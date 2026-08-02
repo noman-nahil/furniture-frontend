@@ -103,7 +103,9 @@ export default function CheckoutFlow({ userData }: { userData: { name: string; e
         const adjustmentMessages = data.stockAdjustments.map(
           (adj) => `${pickLocale(adj.name)}: reduced from ${adj.requested} to ${adj.available}`
         );
-        toast.warning(`Stock adjusted: ${adjustmentMessages.join(", ")}. Redirecting to cart...`);
+        toast(`Stock adjusted: ${adjustmentMessages.join(", ")}. Redirecting to cart...`, {
+          icon: "⚠️",
+        });
 
         setTimeout(() => {
           router.replace("/cart");

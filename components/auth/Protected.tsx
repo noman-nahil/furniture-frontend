@@ -25,11 +25,12 @@ export default function Protected({ children, allow }: Props) {
     }
 
     if (allow !== "any" && user) {
-      const isAllowed = allow.includes(user.role);
+      const role = user.role as ProtectedRole;
+      const isAllowed = allow.includes(role);
       if (!isAllowed) {
-        if (user.role === "admin") {
+        if (role === "admin") {
           router.replace("/admin");
-        } else if (user.role === "manager") {
+        } else if (role === "manager") {
           router.replace("/manager");
         } else {
           router.replace("/dashboard");
@@ -46,7 +47,11 @@ export default function Protected({ children, allow }: Props) {
     );
   }
 
-  if (allow !== "any" && user && !allow.includes(user.role)) {
+  if (
+    allow !== "any" &&
+    user &&
+    !allow.includes(user.role as ProtectedRole)
+  ) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="rounded-xl border border-slate-800 bg-slate-900/70 px-6 py-4 text-sm text-slate-100">

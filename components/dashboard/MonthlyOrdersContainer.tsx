@@ -20,46 +20,40 @@ function isMonthlyOrderDataArray(value: unknown): value is MonthlyOrderData[] {
         item &&
         typeof item === "object" &&
         typeof (item as MonthlyOrderData).month === "string" &&
-        typeof (item as MonthlyOrderData).orders === "number"
+        typeof (item as MonthlyOrderData).orders === "number",
     )
   );
 }
 
-async function MonthlyOrdersData({ chartRange }: { chartRange: "year" | "12months" }) {
+async function MonthlyOrdersData({
+  chartRange,
+}: {
+  chartRange: "year" | "12months";
+}) {
   const cookieStore = await cookies();
   const baseUrl = process.env.BACKEND_URL;
 
-  // ✅ Fixed: previously a missing BACKEND_URL silently fell through to
-  //   the "no data" empty state — indistinguishable from a store that
-  //   genuinely has zero orders. That's a real misconfiguration and
-  //   should say so, not look like healthy-but-empty data.
   if (!baseUrl) {
     console.error("[MonthlyOrders] BACKEND_URL is not set");
     return <MonthlyOrdersStatus variant="config-error" />;
   }
 
   let monthlyData: unknown;
+  let fetchFailed = false;
 
   try {
     const query = chartRange === "12months" ? "?range=12months" : "";
-    const response = await fetch(`${baseUrl}/dashboard/monthly-orders${query}`, {
-      headers: {
-        Cookie: cookieStore.toString(),
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${baseUrl}/dashboard/monthly-orders${query}`,
+      {
+        headers: {
+          Cookie: cookieStore.toString(),
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
       },
-      // Dashboard data changes slowly; no-store guarantees freshness but
-      // hits the backend on every load. If this endpoint gets hit at
-      // scale, consider `next: { revalidate: 60 }` instead so Next.js
-      // can serve a cached copy for up to 60s and revalidate in the
-      // background — trades a little staleness for far fewer backend
-      // calls.
-      cache: "no-store",
-    });
+    );
 
-    // ✅ Added: a session that expired mid-visit should send the user
-    //   back to login (consistent with how middleware.ts already
-    //   handles this everywhere else), not render a generic error card
-    //   on an otherwise-authenticated-looking dashboard.
     if (response.status === 401) {
       redirect("/login?reason=session_expired");
     }
@@ -67,20 +61,21 @@ async function MonthlyOrdersData({ chartRange }: { chartRange: "year" | "12month
     if (!response.ok) {
       console.error(
         "[MonthlyOrders] Failed to fetch monthly orders data:",
-        response.statusText
+        response.statusText,
       );
-      return <MonthlyOrdersStatus variant="error" />;
+      fetchFailed = true;
+    } else {
+      monthlyData = await response.json();
     }
-
-    monthlyData = await response.json();
   } catch (error) {
     console.error("[MonthlyOrders] Error fetching monthly orders data:", error);
+    fetchFailed = true;
+  }
+
+  if (fetchFailed) {
     return <MonthlyOrdersStatus variant="error" />;
   }
 
-  // ✅ Fixed: previously trusted the response shape blindly. An
-  //   unexpected payload now surfaces as a clear error instead of
-  //   breaking inside the chart or rendering silently-wrong data.
   if (!isMonthlyOrderDataArray(monthlyData)) {
     console.error("[MonthlyOrders] Unexpected response shape:", monthlyData);
     return <MonthlyOrdersStatus variant="error" />;

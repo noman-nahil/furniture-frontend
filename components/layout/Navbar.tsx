@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import NavbarClient from "./NavbarClient";
 import TopBar from "./TopBar";
@@ -23,7 +24,9 @@ export default async function Navbar() {
     // its own while the nav sticks alone.
     <div className="sticky top-0 z-50">
       <TopBar />
-      <NavbarClient categories={categories} user={user} />
+      <Suspense fallback={<div className="h-16 border-b border-gray-200 bg-white" />}>
+        <NavbarClient categories={categories} user={user} />
+      </Suspense>
     </div>
   );
 }

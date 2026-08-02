@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef, Fragment } from "react";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  Fragment,
+  Suspense,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/authClient";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -176,7 +184,7 @@ function getDateRangeBounds(
   }
 }
 
-export default function AdminOrdersPage() {
+function AdminOrdersContent() {
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -572,6 +580,20 @@ export default function AdminOrdersPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[40vh] flex items-center justify-center text-sm text-slate-400">
+          Loading orders...
+        </div>
+      }
+    >
+      <AdminOrdersContent />
+    </Suspense>
   );
 }
 

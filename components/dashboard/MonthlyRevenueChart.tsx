@@ -27,6 +27,49 @@ const ORDERS_ACCENT = "#38bdf8";  // sky-400
 const GRID_LINE = "#334155";
 const AXIS_TEXT = "#94a3b8";
 
+function formatRevenueCurrency(value: number) {
+  return new Intl.NumberFormat(LOCALE, {
+    style: "currency",
+    currency: CURRENCY_CODE,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function CustomTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+    payload: { month: string };
+  }>;
+}) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-950/95 p-3 text-sm shadow-lg backdrop-blur-sm">
+      <p className="font-medium text-slate-200">{payload[0].payload.month}</p>
+      <div className="mt-2 space-y-1">
+        {payload.map((entry, index) => (
+          <p
+            key={index}
+            className="text-xs font-medium"
+            style={{ color: entry.color }}
+          >
+            {entry.name}:{" "}
+            {entry.name === "Revenue"
+              ? formatRevenueCurrency(entry.value)
+              : entry.value.toLocaleString()}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
  * MonthlyRevenueChart — primary analytics card with revenue area + orders
  * line overlay. Matches the orders chart shell (border, padding, header)
@@ -59,42 +102,7 @@ export function MonthlyRevenueChart({ data }: MonthlyRevenueChartProps) {
     return { totalRevenue, trendPct, peakIndex };
   }, [data]);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat(LOCALE, {
-      style: "currency",
-      currency: CURRENCY_CODE,
-      maximumFractionDigits: 0,
-    }).format(value);
-
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: Array<{ name: string; value: number; color: string; payload: { month: string } }>;
-  }) => {
-    if (!active || !payload?.length) return null;
-
-    return (
-      <div className="rounded-lg border border-slate-700 bg-slate-950/95 p-3 text-sm shadow-lg backdrop-blur-sm">
-        <p className="font-medium text-slate-200">{payload[0].payload.month}</p>
-        <div className="mt-2 space-y-1">
-          {payload.map((entry, index) => (
-            <p
-              key={index}
-              className="text-xs font-medium"
-              style={{ color: entry.color }}
-            >
-              {entry.name}:{" "}
-              {entry.name === "Revenue"
-                ? formatCurrency(entry.value)
-                : entry.value.toLocaleString()}
-            </p>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const formatCurrency = formatRevenueCurrency;
 
   // NEW: custom dot renderer for the revenue area — renders nothing for
   // ordinary points (keeps the line clean) but a highlighted ring+dot at

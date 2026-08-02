@@ -1,6 +1,6 @@
 // hooks/useBulkUpdate.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { productsApi } from "../app/features/api/productsApi";
+import { productsApi } from "@/features/products/api/productsApi";
 
 export function useBulkUpdate() {
   const qc = useQueryClient();

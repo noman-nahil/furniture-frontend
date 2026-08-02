@@ -12,29 +12,9 @@ import {
 } from "@/lib/cart";
 import { formatBDT } from "@/lib/productPrice";
 import { cartApi } from "@/features/cart/api/cartApi";
+import type { ValidatedCartItem } from "@/features/cart/types";
+import { pickLocale } from "@/lib/locale";
 import Image from "next/image";
-
-type ValidatedCartItem = {
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  slug?: string;
-  image?: string;
-  lineTotal: number;
-  stock: number;
-};
-
-type CheckoutResponse = {
-  items: ValidatedCartItem[];
-  total: number;
-  stockAdjustments?: {
-    productId: string;
-    name: string;
-    requested: number;
-    available: number;
-  }[];
-};
 
 function r2Url(key: string): string {
   if (!key) return "";
@@ -92,9 +72,10 @@ export default function CartContent() {
 
         // Show warning about stock adjustments
         const adjustmentMessages = data.stockAdjustments.map(
-          adj => `${adj.name}: reduced from ${adj.requested} to ${adj.available}`
+          (adj) =>
+            `${pickLocale(adj.name)}: reduced from ${adj.requested} to ${adj.available}`,
         );
-        toast.warning(`Stock adjusted: ${adjustmentMessages.join(", ")}`);
+        toast(`Stock adjusted: ${adjustmentMessages.join(", ")}`);
       }
 
       setError(null);
@@ -214,16 +195,21 @@ export default function CartContent() {
               </span>
             </div>
             <ul className="divide-y divide-gray-100">
-              {validatedItems.map((item) => (
+              {validatedItems.map((item) => {
+                const displayName = pickLocale(item.name);
+                const slugValue = pickLocale(item.slug);
+                const href = slugValue ? `/products/${slugValue}` : "/products";
+
+                return (
                 <li key={item.productId} className="p-4 sm:p-5 hover:bg-gray-50/50 transition-colors">
                   <div className="flex gap-4">
                     <Link
-                      href={item.slug ? `/products/${item.slug}` : "/products"}
+                      href={href}
                       className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gray-100 overflow-hidden ring-1 ring-gray-200/80"
                     >
                    <Image
                     src={item.image ? r2Url(item.image) : "/placeholder-product.png"}
-                    alt={item.name}
+                    alt={displayName}
                     width={96}
                     height={96}
                     className="w-full h-full object-cover"
@@ -231,10 +217,10 @@ export default function CartContent() {
                     </Link>
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={item.slug ? `/products/${item.slug}` : "/products"}
+                        href={href}
                         className="font-medium text-gray-900 hover:text-gray-700 line-clamp-2 text-[15px]"
                       >
-                        {item.name}
+                        {displayName}
                       </Link>
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-0.5">
                         <span className="text-sm text-gray-500 tabular-nums">
@@ -284,7 +270,8 @@ export default function CartContent() {
                     </div>
                   </div>
                 </li>
-              ))}
+              );
+              })}
             </ul>
           </div>
         </div>
