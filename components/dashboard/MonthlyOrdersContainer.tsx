@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { MonthlyOrdersChart } from "./MonthlyOrdersChart";
-import { MonthlyOrdersSkeleton } from "./MonthlyOrdersSkeleton";
-import { MonthlyOrdersStatus } from "./MonthlyOrdersStatus";
+import { MonthlyOrdersChart } from "@/components/dashboard/MonthlyOrdersChart";
+import { MonthlyOrdersSkeleton } from "@/components/dashboard/MonthlyOrdersSkeleton";
+import { MonthlyOrdersStatus } from "@/components/dashboard/MonthlyOrdersStatus";
 import { MonthlyOrderData } from "@/types/monthlyOrders";
 
 /**
