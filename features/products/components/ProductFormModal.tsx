@@ -29,12 +29,25 @@ export function ProductFormModal({
 
   const title = editingId ? "Edit Product" : "Create Product";
 
+  // Focus the close button only when the modal opens — not on every
+  // parent re-render. Depending on `onClose` here used to re-run this
+  // effect after each keystroke (unstable callback identity) and steal
+  // focus from the field the admin was typing in.
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+
+    const justOpened = !wasOpenRef.current;
+    wasOpenRef.current = true;
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    closeBtnRef.current?.focus();
+    if (justOpened) {
+      closeBtnRef.current?.focus();
+    }
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {

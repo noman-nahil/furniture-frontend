@@ -1,7 +1,7 @@
 // features/products/hooks/useProductForm.ts
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { productsApi } from "../api/productsApi";
@@ -157,14 +157,16 @@ export function useProductForm(onSaved?: (product: Product) => void) {
     []
   );
 
+  const resetImages = imageUploader.reset;
+
   const resetForm = useCallback(() => {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
     setError(null);
     setExistingImages([]);
     setRemovedExistingKeys([]);
-    imageUploader.reset();
-  }, [imageUploader]);
+    resetImages();
+  }, [resetImages]);
 
   const startEdit = useCallback(
     (p: Product) => {
@@ -200,9 +202,9 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       });
       setExistingImages(p.images ?? []);
       setRemovedExistingKeys([]);
-      imageUploader.reset();
+      resetImages();
     },
-    [imageUploader]
+    [resetImages],
   );
 
   const removeExistingImage = useCallback((key: string) => {
@@ -254,22 +256,42 @@ export function useProductForm(onSaved?: (product: Product) => void) {
     [editingId, form, imageUploader, onSaved, qc, resetForm, removedExistingKeys]
   );
 
-  return {
-    form,
-    editingId,
-    error,
-    saving,
-    isDirty,
-    imageUploader,
-    activeExistingImages,
-    removeExistingImage,
-    handleChange,
-    handleNameChange,
-    handleDescriptionChange,
-    handleSeoChange,
-    handleStructuredDataChange,
-    handleSubmit,
-    resetForm,
-    startEdit,
-  };
+  return useMemo(
+    () => ({
+      form,
+      editingId,
+      error,
+      saving,
+      isDirty,
+      imageUploader,
+      activeExistingImages,
+      removeExistingImage,
+      handleChange,
+      handleNameChange,
+      handleDescriptionChange,
+      handleSeoChange,
+      handleStructuredDataChange,
+      handleSubmit,
+      resetForm,
+      startEdit,
+    }),
+    [
+      form,
+      editingId,
+      error,
+      saving,
+      isDirty,
+      imageUploader,
+      activeExistingImages,
+      removeExistingImage,
+      handleChange,
+      handleNameChange,
+      handleDescriptionChange,
+      handleSeoChange,
+      handleStructuredDataChange,
+      handleSubmit,
+      resetForm,
+      startEdit,
+    ],
+  );
 }

@@ -1,7 +1,7 @@
 // features/products/hooks/useImageUploader.ts
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_IMAGE_TYPES_LABEL,
@@ -33,10 +33,18 @@ export function useImageUploader(existingCount: number = 0) {
 
       const incoming: ImageFile[] = Array.from(raw).map((file) => {
         if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-          return { file, preview: "", error: `${file.name}: only ${ALLOWED_IMAGE_TYPES_LABEL} are allowed.` };
+          return {
+            file,
+            preview: "",
+            error: `${file.name}: only ${ALLOWED_IMAGE_TYPES_LABEL} are allowed.`,
+          };
         }
         if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-          return { file, preview: "", error: `${file.name}: must be under ${MAX_FILE_SIZE_MB} MB.` };
+          return {
+            file,
+            preview: "",
+            error: `${file.name}: must be under ${MAX_FILE_SIZE_MB} MB.`,
+          };
         }
         const preview = URL.createObjectURL(file);
         urlsRef.current.add(preview);
@@ -48,7 +56,7 @@ export function useImageUploader(existingCount: number = 0) {
         return [...prev, ...incoming].slice(0, capacity);
       });
     },
-    [existingCount]
+    [existingCount],
   );
 
   const removeFile = useCallback((index: number) => {
@@ -62,14 +70,23 @@ export function useImageUploader(existingCount: number = 0) {
     });
   }, []);
 
+  // Stable reset — do not close over `files`, or every upload/keystroke
+  // parent re-render recreates reset → resetForm → modal onClose.
   const reset = useCallback(() => {
-    files.forEach((f) => f.preview && URL.revokeObjectURL(f.preview));
-    urlsRef.current.clear();
-    setFiles([]);
-  }, [files]);
+    setFiles((prev) => {
+      prev.forEach((f) => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
+      urlsRef.current.clear();
+      return [];
+    });
+  }, []);
 
   const hasErrors = files.some((f) => f.error);
   const remaining = Math.max(0, MAX_IMAGES - existingCount - files.length);
 
-  return { files, addFiles, removeFile, reset, hasErrors, remaining };
+  return useMemo(
+    () => ({ files, addFiles, removeFile, reset, hasErrors, remaining }),
+    [files, addFiles, removeFile, reset, hasErrors, remaining],
+  );
 }

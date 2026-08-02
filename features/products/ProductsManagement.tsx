@@ -121,25 +121,29 @@ export function ProductsManagement({
     setFormOpen(false);
   }, []));
 
+  // Depend on stable handlers from the hook — not the whole formState
+  // object (new identity every keystroke) — so modal onClose stays stable.
+  const { resetForm, startEdit } = formState;
+
   const closeFormAndReset = useCallback(() => {
-    formState.resetForm();
+    resetForm();
     setFormOpen(false);
     if (searchParams.get("edit")) {
       router.replace(window.location.pathname);
     }
-  }, [formState, router, searchParams]);
+  }, [resetForm, router, searchParams]);
 
   const openCreateForm = useCallback(() => {
-    formState.resetForm();
+    resetForm();
     setFormOpen(true);
-  }, [formState]);
+  }, [resetForm]);
 
   const openEditForm = useCallback(
     (product: Product) => {
-      formState.startEdit(product);
+      startEdit(product);
       setFormOpen(true);
     },
-    [formState],
+    [startEdit],
   );
 
   // Open edit modal when linked from overview inventory (?edit=productId)
