@@ -194,17 +194,28 @@ export default function HeroCarousel({ banners }: { banners: readonly HeroBanner
         {slides.map((banner, i) => (
           <div
             key={i}
-            className="relative min-w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px]"
+            className="relative min-w-full h-[300px] sm:h-[500px] md:h-[600px] lg:h-[700px] bg-[#F5F0EA]"
             role="group"
             aria-roledescription="slide"
             aria-hidden={i !== safeIndex}
           >
+            {/* Mobile: blurred fill so the hero stays tall without empty bars */}
+            <Image
+              src={getImageUrl(banner.image)}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover blur-md scale-110 sm:hidden"
+              aria-hidden
+              priority={i === FIRST_REAL_INDEX}
+            />
+            {/* Mobile: full banner visible; sm+: cover hero unchanged */}
             <Image
               src={getImageUrl(banner.image)}
               alt={banner.alt}
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-contain sm:object-cover"
               priority={i === FIRST_REAL_INDEX}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />

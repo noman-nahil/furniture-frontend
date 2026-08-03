@@ -91,6 +91,10 @@ export default function NavbarClient({
   const leaveTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const nameParts = APP_NAME.trim().split(" ");
+const firstWord = nameParts[0];
+const restWords = nameParts.slice(1).join(" ");
+const restChars = restWords.split("");
   // ─── Logout ────────────────────────────────────────────────────────────
 
   const handleLogout = useCallback(() => {
@@ -341,9 +345,9 @@ type TriggerSource = "desktop" | "mobile";
   const logoLink = (
     <Link
       href="/"
-      className="flex items-center text-2xl font-bold text-gray-900 transition-colors duration-200 hover:text-blue-600 shrink-0"
+      className="flex items-center gap-3 shrink-0 group"
     >
-      <div className="relative h-12 w-12 shrink-0 lg:h-20 lg:w-20">
+      <div className="relative h-16 w-16 shrink-0 md:h-20 md:w-20 lg:h-24 lg:w-24">
         <Image
           src={LOGO_PATH}
           alt={APP_NAME}
@@ -351,6 +355,18 @@ type TriggerSource = "desktop" | "mobile";
           className="object-contain"
           priority
         />
+      </div>
+      <div className="flex flex-col items-stretch leading-none px-1">
+        <span className="uppercase font-serif text-lg font-semibold text-teal-700 transition-colors duration-200 md:text-xl lg:text-2xl whitespace-nowrap">
+          {firstWord}
+        </span>
+        {restChars.length > 0 && (
+          <span className="-mt-1 font-serif flex justify-between text-lg font-medium uppercase text-teal-700 ">
+            {restChars.map((char, i) => (
+              <span key={i}>{char === " " ? "\u00A0\u00A0" : char}</span>
+            ))}
+          </span>
+        )}
       </div>
     </Link>
   );
@@ -366,10 +382,10 @@ type TriggerSource = "desktop" | "mobile";
         className={className}
         aria-label="Search products"
       />
-      <Search
+      {/* <Search
         className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
         aria-hidden
-      />
+      /> */}
     </div>
   );
 
@@ -452,7 +468,7 @@ type TriggerSource = "desktop" | "mobile";
           <Link
             key={cat.slug}
             href={`/category/${cat.slug}`}
-            className={`flex shrink-0 items-center gap-1 border-b-2 pb-1 text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
+            className={`flex shrink-0 items-center gap-1 border-b-2 pb-1 text-sm font-bold whitespace-nowrap transition-colors duration-200 ${
               active
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-700 hover:border-blue-600 hover:text-blue-600"
@@ -492,7 +508,7 @@ type TriggerSource = "desktop" | "mobile";
           >
             <Link
               href={`/category/${cat.slug}`}
-              className="text-sm font-medium whitespace-nowrap"
+              className="text-sm font-bold whitespace-nowrap"
               aria-haspopup={isDesktop ? "true" : undefined}
               aria-expanded={isDesktop ? menuOpen : undefined}
             >

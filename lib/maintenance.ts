@@ -10,7 +10,10 @@
 import { joinApiUrl } from "@/lib/apiUrl";
 
 const MAINTENANCE_CACHE_TTL_MS = 30_000;
-const REQUEST_TIMEOUT_MS = 2_000;
+// Render free-tier cold starts commonly take 5–15s. 2s was aborting every
+// first request after sleep; keep middleware bounded but give the API time
+// to wake. Warm responses are ~1s.
+const REQUEST_TIMEOUT_MS = 10_000;
 
 /** Path on the storefront that shows the maintenance notice. */
 export const MAINTENANCE_PATH = "/maintenance";
@@ -18,6 +21,15 @@ export const MAINTENANCE_PATH = "/maintenance";
 let lastKnownValue = false;
 let cachedUntil = 0;
 let inFlight: Promise<boolean> | null = null;
+
+function isAbortError(err: unknown): boolean {
+  return (
+    (err instanceof Error && err.name === "AbortError") ||
+    (typeof DOMException !== "undefined" &&
+      err instanceof DOMException &&
+      err.name === "AbortError")
+  );
+}
 
 async function fetchMaintenanceMode(): Promise<boolean> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -45,7 +57,13 @@ async function fetchMaintenanceMode(): Promise<boolean> {
   } catch (err) {
     // Fail open: an unreachable settings API must never take the storefront
     // offline by itself, so keep serving the last answer we trusted.
-    console.error("[maintenance] settings lookup failed", err);
+    if (isAbortError(err)) {
+      console.warn(
+        `[maintenance] settings lookup timed out after ${REQUEST_TIMEOUT_MS}ms — using last known value (${lastKnownValue})`,
+      );
+    } else {
+      console.error("[maintenance] settings lookup failed", err);
+    }
     return lastKnownValue;
   } finally {
     clearTimeout(timeoutId);

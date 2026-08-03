@@ -7,8 +7,7 @@ import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import ProductCard from "@/components/product/ProductCard";
 import ProductAddToCart from "@/components/product/ProductAddToCart";
 import ProductImageViewer from "@/components/product/ProductImageViewer";
-import { CURRENCY } from "@/lib/config";
-import { getImageUrl } from "@/lib/image";
+import { APP_NAME, CURRENCY } from "@/lib/config";
 import {
   discountBadgeLabel,
   formatBDT,
@@ -20,6 +19,13 @@ import {
 } from "@/lib/productPrice";
 import type { StoreProduct, LocalizedField } from "@/types/product";
 import { fetchProductBySlugOrId, plainDescription } from "@/lib/seo/catalog";
+import {
+  breadcrumbJsonLd,
+  JsonLd,
+  productJsonLd,
+} from "@/lib/seo/jsonLd";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { absoluteUrl } from "@/lib/seo/site";
 
 export const revalidate = 60;
 
@@ -87,17 +93,19 @@ export async function generateMetadata({
   const product = await getProduct(slug);
 
   if (!product) {
-    return {
+    return buildPageMetadata({
       title: "Product not found",
-      description: "This product could not be found at Meubles De Paris.",
-      robots: { index: false, follow: false },
-    };
+      description: `This product could not be found at ${APP_NAME}.`,
+      path: `/products/${slug}`,
+      noIndex: true,
+      noFollow: true,
+    });
   }
 
   const displayName = pickLocale(product.name);
+  const productSlug = pickLocale(product.slug) || slug;
+  const productPath = `/products/${productSlug}`;
 
-  // Prefer the dedicated SEO field (written for search intent) over the
-  // raw product name, falling back through: seo.metaTitle → product name.
   const seoBlock = product.seo?.[LOCALE];
   const title = seoBlock?.metaTitle || displayName;
 
@@ -105,32 +113,42 @@ export async function generateMetadata({
     seoBlock?.metaDescription ||
     (product.description
       ? plainDescription(pickLocale(product.description))
-      : `Shop ${displayName} — premium furniture and décor at Meubles De Paris.`);
+      : `Shop ${displayName} — premium furniture and décor at ${APP_NAME}.`);
 
-  // FIXED: seoBlock.ogImage / product.images[0] are both possibly a raw
-  // R2 object key, not an absolute URL — getImageUrl() converts either
-  // (it's a no-op if already an absolute http(s) URL, so this is safe
-  // regardless of which source the image came from). Without this,
-  // shared links on Facebook/WhatsApp/etc. silently fail to show a
-  // preview image, since crawlers require an absolute URL.
+  // Prefer admin SEO ogImage, then the product's main gallery image.
+  // absoluteImageUrl (via buildPageMetadata) makes the URL absolute for
+  // Facebook / WhatsApp / LinkedIn / X / Discord / Telegram / Slack.
   const rawOgImage = seoBlock?.ogImage || product.images?.[0];
-  const ogImage = rawOgImage ? getImageUrl(rawOgImage) : undefined;
+  const shouldNoIndex =
+    Boolean(product.noIndex) ||
+    Boolean(product.status && product.status !== "active");
 
-  return {
+  const meta = buildPageMetadata({
     title,
     description,
-    alternates: seoBlock?.canonicalUrl ? { canonical: seoBlock.canonicalUrl } : undefined,
-    openGraph: {
-      title,
-      description,
-      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
-    },
-    // Honor an explicit noIndex flag if the product has one, in addition
-    // to the existing draft/inactive-status check.
-    ...(product.noIndex || (product.status && product.status !== "active")
-      ? { robots: { index: false, follow: false } }
-      : {}),
-  };
+    path: productPath,
+    image: rawOgImage,
+    imageAlt: displayName,
+    keywords: seoBlock?.keywords,
+    type: "product",
+    noIndex: shouldNoIndex,
+    noFollow: shouldNoIndex,
+  });
+
+  // Allow an explicit absolute canonical override from admin SEO fields.
+  if (seoBlock?.canonicalUrl) {
+    const canonical = absoluteUrl(seoBlock.canonicalUrl);
+    return {
+      ...meta,
+      alternates: { canonical },
+      openGraph: {
+        ...meta.openGraph,
+        url: canonical,
+      },
+    };
+  }
+
+  return meta;
 }
 
 // ─────────────────────────────────────────────
@@ -177,39 +195,33 @@ export default async function ProductDetailPage({
     "Secure checkout",
   ] as const;
 
-  // JSON-LD structured data — feeds Google's Product rich-result
-  // eligibility. Only emitted if structuredData exists on the product;
-  // absent fields (gtin/mpn) are simply omitted rather than sent empty,
-  // since Google treats a missing field differently from an empty one.
   const sd = product.structuredData;
-  const jsonLd = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
+  const productSlug = pickLocale(product.slug) || slug;
+  const productPath = `/products/${productSlug}`;
+
+  const productLd = productJsonLd({
     name: displayName,
-    image: product.images,
     description: displayDescription,
-    ...(sd?.brand ? { brand: { "@type": "Brand", name: sd.brand } } : {}),
-    ...(sd?.gtin ? { gtin: sd.gtin } : {}),
-    ...(sd?.mpn ? { mpn: sd.mpn } : {}),
-    offers: {
-      "@type": "Offer",
-      priceCurrency: CURRENCY,
-      price: discounted ? final : product.price,
-      availability: oos
-        ? "https://schema.org/OutOfStock"
-        : "https://schema.org/InStock",
-      ...(sd?.condition ? { itemCondition: `https://schema.org/${sd.condition}` } : {}),
-    },
-  };
+    images: product.images,
+    path: productPath,
+    price: discounted ? final : product.price,
+    inStock: !oos,
+    brand: sd?.brand,
+    gtin: sd?.gtin,
+    mpn: sd?.mpn,
+    condition: sd?.condition,
+  });
+
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Products", path: "/products" },
+    { name: displayName, path: productPath },
+  ]);
 
   return (
     <>
-      {/* JSON-LD for Google rich results (star ratings/price appear in
-          search once reviews exist; price/availability work today). */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={productLd} />
+      <JsonLd data={breadcrumbLd} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
 

@@ -3,7 +3,13 @@ import type { Metadata } from "next";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { PaginatedProductGrid } from "@/components/products/PaginatedProductGrid";
 import type { ListProduct } from "@/components/products/PaginatedProductGrid";
-import { fetchCategoryNameBySlug } from "@/lib/seo/catalog";
+import { fetchCategoryBySlug } from "@/lib/seo/catalog";
+import {
+  breadcrumbJsonLd,
+  JsonLd,
+} from "@/lib/seo/jsonLd";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { APP_NAME } from "@/lib/config";
 
 // ─────────────────────────────────────────────
 // ISR
@@ -35,8 +41,8 @@ type ProductsApiResponse = {
 // that runs in both generateMetadata and the page.
 // ─────────────────────────────────────────────
 
-const getCategoryName = cache(async (slug: string): Promise<string | null> => {
-  return fetchCategoryNameBySlug(slug);
+const getCategory = cache(async (slug: string) => {
+  return fetchCategoryBySlug(slug);
 });
 
 // ─────────────────────────────────────────────
@@ -56,17 +62,18 @@ function slugToTitle(slug: string): string {
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { categorySlug } = await params;
 
-  // ✅ cache() means this DB call is shared with the page render below —
-  //    no second round-trip for the same slug on the same request.
-  const name = await getCategoryName(categorySlug);
-  const title = name ?? slugToTitle(categorySlug);
-  const description = `Shop ${title} — furniture and home décor at Meubles De Paris.`;
+  const category = await getCategory(categorySlug);
+  const title = category?.name ?? slugToTitle(categorySlug);
+  const description = `Shop ${title} — furniture and home décor at ${APP_NAME}.`;
 
-  return {
+  return buildPageMetadata({
     title,
     description,
-    openGraph: { title, description },
-  };
+    path: `/category/${categorySlug}`,
+    image: category?.image,
+    imageAlt: title,
+    keywords: [title, "furniture", "home décor", APP_NAME],
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -112,10 +119,8 @@ export default async function CategoryPage({
     totalPages = payload.totalPages ?? 1;
   }
 
-  // ✅ Category name: shared cache() call — no second DB round-trip.
-  //    Falls back to slug-derived title if not found.
-  const name = await getCategoryName(categorySlug);
-  const displayName = name ?? slugToTitle(categorySlug);
+  const category = await getCategory(categorySlug);
+  const displayName = category?.name ?? slugToTitle(categorySlug);
 
   const emptyState = (
     <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center">
@@ -127,32 +132,36 @@ export default async function CategoryPage({
     </div>
   );
 
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Categories", path: "/categories" },
+    { name: displayName, path: `/category/${categorySlug}` },
+  ]);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{displayName}</h1>
+    <>
+      <JsonLd data={breadcrumbLd} />
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">{displayName}</h1>
 
-        {/* ✅ Fixed: previously showed products.length (current page batch, e.g. 12)
-            not the real catalog total. Now uses `total` from the API response. */}
-        {total > 0 && (
-          <span className="text-sm text-gray-500">
-            {total} item{total === 1 ? "" : "s"}
-          </span>
-        )}
+          {total > 0 && (
+            <span className="text-sm text-gray-500">
+              {total} item{total === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
+
+        <PaginatedProductGrid
+          products={products}
+          total={total}
+          page={page}
+          totalPages={totalPages}
+          limit={DEFAULT_LIMIT}
+          search=""
+          emptyState={emptyState}
+        />
       </div>
-
-      {/* ✅ Removed the local `type Product` definition — now uses the
-          shared ListProduct type exported from PaginatedProductGrid.
-          Single source of truth, no duplication across pages. */}
-      <PaginatedProductGrid
-        products={products}
-        total={total}
-        page={page}
-        totalPages={totalPages}
-        limit={DEFAULT_LIMIT}
-        search=""
-        emptyState={emptyState}
-      />
-    </div>
+    </>
   );
 }

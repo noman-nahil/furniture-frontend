@@ -1,9 +1,18 @@
-import { APP_NAME } from "@/lib/config";
+import { APP_NAME, LOGO_PATH } from "@/lib/config";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/seo/jsonLd";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_TITLE,
+  getSiteUrl,
+  SITE_KEYWORDS,
+  SITE_NAME,
+} from "@/lib/seo/site";
 
 // ─────────────────────────────────────────────
 // Fonts
@@ -12,7 +21,6 @@ import { Toaster } from "react-hot-toast";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  // ✅ Preload only the weights you actually use — reduces font payload
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
@@ -25,43 +33,72 @@ const geistMono = Geist_Mono({
 });
 
 // ─────────────────────────────────────────────
-// Site URL
-// ─────────────────────────────────────────────
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3000";
-
-// ─────────────────────────────────────────────
 // Metadata
 // ─────────────────────────────────────────────
+
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: APP_NAME,
+    default: DEFAULT_TITLE,
     template: `%s | ${APP_NAME}`,
   },
-  description:
-    "Premium furniture and home décor. Discover curated pieces crafted for lasting elegance.",
-  keywords: ["furniture", "home décor", "premium furniture", APP_NAME],
+  description: DEFAULT_DESCRIPTION,
+  keywords: [...SITE_KEYWORDS],
   authors: [{ name: APP_NAME }],
-  // ✅ Tells browsers this is a web app — enables standalone mode on iOS
+  creator: APP_NAME,
+  publisher: APP_NAME,
   applicationName: APP_NAME,
+  category: "shopping",
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.ico"],
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
-    locale: "en_US",
-    siteName: APP_NAME,
-    title: APP_NAME,
-    description:
-      "Premium furniture and home décor. Discover curated pieces crafted for lasting elegance.",
+    locale: "fr_FR",
+    url: siteUrl,
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE.url,
+        width: DEFAULT_OG_IMAGE.width,
+        height: DEFAULT_OG_IMAGE.height,
+        alt: DEFAULT_OG_IMAGE.alt,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: APP_NAME,
-    description:
-      "Premium furniture and home décor. Discover curated pieces crafted for lasting elegance.",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE.url],
   },
-  // ✅ Prevents iOS from auto-linking phone numbers / emails in content
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  other: {
+    "og:logo": LOGO_PATH,
+  },
   formatDetection: {
     telephone: false,
     email: false,
@@ -69,11 +106,10 @@ export const metadata: Metadata = {
   },
 };
 
-// `themeColor` moved out of `metadata` and into a dedicated `viewport` export —
-// Next.js has deprecated it on the Metadata object and logs a build warning
-// otherwise. Functionally identical, just the correct current API.
 export const viewport: Viewport = {
   themeColor: "#FAFAF8",
+  width: "device-width",
+  initialScale: 1,
 };
 
 // ─────────────────────────────────────────────
@@ -86,10 +122,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // ✅ suppressHydrationWarning: prevents mismatch warning from browser
-    //    extensions that inject attributes onto <html> (e.g. password managers)
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         <AuthProvider>
           {children}
 
@@ -97,9 +133,7 @@ export default function RootLayout({
               position="top-right"
               toastOptions={{
                 duration: 2500,
-                // ─── Default toast style ──────────────────────────────
                 style: {
-                  // Matches the warm palette from globals.css
                   background: "#FAFAF8",
                   color: "#1A1A1A",
                   border: "1px solid #E8E2D9",
@@ -111,7 +145,6 @@ export default function RootLayout({
                   fontWeight: "500",
                   maxWidth: "380px",
                 },
-                // ─── Per-type overrides ───────────────────────────────
                 success: {
                   style: {
                     background: "#F0FAF4",

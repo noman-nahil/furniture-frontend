@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import ProductCard, { type ProductCardProduct } from "./ProductCard";
 
 export type FeaturedProduct = ProductCardProduct;
@@ -81,6 +83,7 @@ export function FeaturedProducts({
   eyebrow,
   subtitle,
   anchorId = "featured-products",
+  viewAllHref,
 }: {
   products: FeaturedProduct[];
   locale?: "fr" | "en";
@@ -89,6 +92,8 @@ export function FeaturedProducts({
   subtitle?: string;
   /** Must be unique per section — it's the scroll target for pagination. */
   anchorId?: string;
+  /** Storefront path for View All, e.g. `/featured-products`. */
+  viewAllHref?: string;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
@@ -117,29 +122,47 @@ export function FeaturedProducts({
   return (
     <section
       id={anchorId}
-      className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20 scroll-mt-16 sm:scroll-mt-20"
+      className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 scroll-mt-16 sm:scroll-mt-20"
     >
-      <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+      <header className="mb-7 sm:mb-9 lg:mb-11">
         {eyebrow && (
-          <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
-            <div className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-blue-500" />
-            <span className="text-xs sm:text-sm font-semibold text-blue-600 uppercase tracking-wider">
+          <div className="mb-2.5 sm:mb-3 flex items-center gap-2">
+            <div className="h-px w-6 sm:w-10 bg-gradient-to-r from-[#B8935A]/60 to-transparent" />
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-[#B8935A]">
               {eyebrow}
             </span>
-            <div className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-blue-500" />
           </div>
         )}
-        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-4">
-          {title}
-        </h2>
+
+        <div className="flex items-center justify-between gap-3 sm:gap-6">
+          <h2 className="min-w-0 flex-1 font-serif text-[1.35rem] sm:text-2xl lg:text-[1.85rem] font-semibold leading-tight tracking-[-0.015em] text-[#1A1A1A]">
+            <span className="block truncate sm:whitespace-normal sm:overflow-visible">
+              {title}
+            </span>
+          </h2>
+
+          {viewAllHref ? (
+            <Link
+              href={viewAllHref}
+              className="group inline-flex shrink-0 items-center gap-1.5 sm:gap-2 rounded-full border border-[#E8E2D9] bg-[#FAFAF8] px-3 py-1.5 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium tracking-[0.04em] text-[#1A1A1A] transition-all duration-300 ease-out hover:border-[#B8935A]/45 hover:bg-white hover:text-[#B8935A] hover:shadow-[0_4px_16px_rgba(184,147,90,0.12)] active:scale-[0.98]"
+            >
+              <span>View All</span>
+              <ArrowRight
+                className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 ease-out group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+          ) : null}
+        </div>
+
         {subtitle && (
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-lg">
+          <p className="mt-2.5 sm:mt-3 max-w-2xl text-sm sm:text-base text-[#6B6560]">
             {subtitle}
           </p>
         )}
-      </div>
+      </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
         {paginatedProducts.map((product) => (
           <ProductCard key={product._id} product={product} locale={locale} />
         ))}

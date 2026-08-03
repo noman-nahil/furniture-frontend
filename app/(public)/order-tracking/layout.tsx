@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-export const metadata: Metadata = {
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { APP_NAME } from "@/lib/config";
+
+export const metadata: Metadata = buildPageMetadata({
   title: "Track Order",
-  description:
-    "Track your order status and details with your order ID at Meubles De Paris.",
-  openGraph: {
-    title: "Track Order",
-    description:
-      "Track your order status and details with your order ID at Meubles De Paris.",
-  },
-};
+  description: `Track your order status and details with your order ID at ${APP_NAME}.`,
+  path: "/order-tracking",
+});
 
 export default function OrderTrackingLayout({
   children,

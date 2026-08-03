@@ -2,6 +2,7 @@ import { cache } from "react";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import type { StoreProduct, LocalizedField } from "@/types/product";
 import type { CategoryNav } from "@/types/categoryNav";
+import type { PublicHomepageSection } from "@/features/homepage-sections/types";
 import { slugify } from "@/lib/slug";
 
 // ─────────────────────────────────────────────
@@ -145,6 +146,110 @@ export async function fetchCategoryNameBySlug(
   const categories = await fetchActiveCategories(locale);
   if (!categories) return null;
   return categories.find((c) => c.slug === slug)?.name ?? null;
+}
+
+/** Full category record (name + image) for OG metadata. */
+export async function fetchCategoryBySlug(
+  slug: string,
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<CategoryNav | null> {
+  const categories = await fetchActiveCategories(locale);
+  if (!categories) return null;
+  return categories.find((c) => c.slug === slug) ?? null;
+}
+
+/** Active categories (+ nested subs) — used by sitemap + category OG. */
+export const getActiveCategories = fetchActiveCategories;
+
+// ─────────────────────────────────────────────
+// Homepage section fetching (View All pages)
+// ─────────────────────────────────────────────
+
+/**
+ * Public homepage section by slug. Deduplicated via React cache() so
+ * generateMetadata and the page share one request.
+ * Returns null for missing/inactive sections (API 404 → client_error).
+ */
+export const fetchHomepageSectionBySlug = cache(
+  async (slug: string): Promise<PublicHomepageSection | null> => {
+    const normalized = slug.trim().toLowerCase();
+    if (!normalized) return null;
+
+    const res = await serverFetch<PublicHomepageSection>(
+      `/homepage-sections/slug/${encodeURIComponent(normalized)}`,
+      { revalidate: 60 },
+    );
+
+    if (isServerFetchError(res) || !res || typeof res !== "object") {
+      return null;
+    }
+
+    if (!("slug" in res) || !("title" in res)) return null;
+    return res;
+  },
+);
+
+type SitemapProduct = {
+  slug: LocalizedField;
+  updatedAt?: string;
+  createdAt?: string;
+  noIndex?: boolean;
+  status?: string;
+};
+
+type ProductsListResponse = {
+  data?: SitemapProduct[];
+  total?: number;
+  totalPages?: number;
+  page?: number;
+};
+
+/**
+ * Paginates the public product list for sitemap generation.
+ * Max page size on the API is 100 — we walk every page.
+ */
+export async function fetchAllProductsForSitemap(
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<Array<{ slug: string; lastModified?: Date }>> {
+  const limit = 100;
+  const out: Array<{ slug: string; lastModified?: Date }> = [];
+  let page = 1;
+  let totalPages = 1;
+
+  while (page <= totalPages) {
+    const res = await serverFetch<ProductsListResponse>(
+      `/products?page=${page}&limit=${limit}&locale=${locale}`,
+      { revalidate: 3600 },
+    );
+
+    if (isServerFetchError(res) || !res || typeof res !== "object") break;
+
+    const payload = res as ProductsListResponse;
+    totalPages = Math.max(1, payload.totalPages ?? 1);
+    const rows = payload.data ?? [];
+
+    for (const product of rows) {
+      if (product.noIndex) continue;
+      if (product.status && product.status !== "active") continue;
+
+      const slug =
+        product.slug?.[locale] || product.slug?.fr || "";
+      if (!slug) continue;
+
+      const rawDate = product.updatedAt || product.createdAt;
+      out.push({
+        slug,
+        lastModified: rawDate ? new Date(rawDate) : undefined,
+      });
+    }
+
+    if (rows.length === 0) break;
+    page += 1;
+    // Safety cap — avoids infinite loops if the API misreports totalPages
+    if (page > 200) break;
+  }
+
+  return out;
 }
 
 /**

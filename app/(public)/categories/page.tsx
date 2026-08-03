@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { CategoryCard } from "@/features/catalog/components/CategoryCard";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { APP_NAME } from "@/lib/config";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Shop by Category",
-  description: "Browse our full range of categories — furniture and home décor at Meubles De Paris.",
-  openGraph: {
-    title: "Shop by Category",
-    description: "Browse our full range of categories — furniture and home décor at Meubles De Paris.",
-  },
-};
+  description: `Browse our full range of categories — furniture and home décor at ${APP_NAME}.`,
+  path: "/categories",
+  keywords: ["furniture categories", "home décor", APP_NAME],
+});
 
 /** Shape of GET /subcategories/active (parentCategory populated). */
 type ActiveSubcategory = {

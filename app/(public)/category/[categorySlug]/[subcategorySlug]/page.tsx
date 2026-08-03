@@ -3,7 +3,16 @@ import type { Metadata } from "next";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { PaginatedProductGrid } from "@/components/products/PaginatedProductGrid";
 import type { ListProduct } from "@/components/products/PaginatedProductGrid";
-import { fetchSubcategoryTitles } from "@/lib/seo/catalog";
+import {
+  fetchCategoryBySlug,
+  fetchSubcategoryTitles,
+} from "@/lib/seo/catalog";
+import {
+  breadcrumbJsonLd,
+  JsonLd,
+} from "@/lib/seo/jsonLd";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { APP_NAME } from "@/lib/config";
 
 // ─────────────────────────────────────────────
 // ISR
@@ -61,21 +70,32 @@ export async function generateMetadata({
   params: Promise<SlugParams>;
 }): Promise<Metadata> {
   const { categorySlug, subcategorySlug } = await params;
-  const titles = await getSubcategoryTitles(categorySlug, subcategorySlug);
+  const [titles, category] = await Promise.all([
+    getSubcategoryTitles(categorySlug, subcategorySlug),
+    fetchCategoryBySlug(categorySlug),
+  ]);
 
   const title = titles
     ? `${titles.subcategory} · ${titles.category}`
     : slugToTitle(subcategorySlug);
 
   const description = titles
-    ? `Browse ${titles.subcategory} in ${titles.category} at Meubles De Paris.`
-    : "Browse furniture and décor at Meubles De Paris.";
+    ? `Browse ${titles.subcategory} in ${titles.category} at ${APP_NAME}.`
+    : `Browse furniture and décor at ${APP_NAME}.`;
 
-  return {
+  return buildPageMetadata({
     title,
     description,
-    openGraph: { title, description },
-  };
+    path: `/category/${categorySlug}/${subcategorySlug}`,
+    image: category?.image,
+    imageAlt: title,
+    keywords: [
+      titles?.subcategory ?? title,
+      titles?.category ?? categorySlug,
+      "furniture",
+      APP_NAME,
+    ],
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -134,34 +154,43 @@ export default async function SubcategoryPage({ params, searchParams }: PageProp
     </div>
   );
 
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Categories", path: "/categories" },
+    { name: catDisplay, path: `/category/${categorySlug}` },
+    {
+      name: subDisplay,
+      path: `/category/${categorySlug}/${subcategorySlug}`,
+    },
+  ]);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <div>
-          {/* ✅ Real category name from DB, not slug-mangled fallback */}
-          <p className="text-sm text-gray-500 mb-1">{catDisplay}</p>
-          <h1 className="text-3xl font-bold text-gray-900">{subDisplay}</h1>
+    <>
+      <JsonLd data={breadcrumbLd} />
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">{catDisplay}</p>
+            <h1 className="text-3xl font-bold text-gray-900">{subDisplay}</h1>
+          </div>
+
+          {total > 0 && (
+            <span className="text-sm text-gray-500">
+              {total} item{total === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
 
-        {/* ✅ Fixed: shows real total from API, not current page batch size */}
-        {total > 0 && (
-          <span className="text-sm text-gray-500">
-            {total} item{total === 1 ? "" : "s"}
-          </span>
-        )}
+        <PaginatedProductGrid
+          products={products}
+          total={total}
+          page={page}
+          totalPages={totalPages}
+          limit={DEFAULT_LIMIT}
+          search=""
+          emptyState={emptyState}
+        />
       </div>
-
-      {/* ✅ Removed local `type Product` — uses shared ListProduct from
-          PaginatedProductGrid. Same type across all product listing pages. */}
-      <PaginatedProductGrid
-        products={products}
-        total={total}
-        page={page}
-        totalPages={totalPages}
-        limit={DEFAULT_LIMIT}
-        search=""
-        emptyState={emptyState}
-      />
-    </div>
+    </>
   );
 }

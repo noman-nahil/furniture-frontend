@@ -5,15 +5,21 @@ import type { HeroBanner } from "@/components/banner/HeroCarousel";
 import { FeaturedProducts } from "@/components/product/FeaturedProducts";
 import type { PublicHomepageSection } from "@/features/homepage-sections/types";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_KEYWORDS } from "@/lib/seo/site";
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Home",
-  description: "Discover premium furniture and home décor. Shop by category at Meubles De Paris.",
-  openGraph: {
-    title: "Home",
-    description: "Discover premium furniture and home décor. Shop by category at Meubles De Paris.",
+  ...buildPageMetadata({
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    path: "/",
+    keywords: [...SITE_KEYWORDS],
+  }),
+  // Avoid "Home | Brand" when using the root title template
+  title: {
+    absolute: DEFAULT_TITLE,
   },
 };
 
@@ -22,7 +28,6 @@ export const metadata: Metadata = {
 // each in without blocking the rest of the page.
 // ─────────────────────────────────────────────
 
-// GET /banners already returns only active banners, ordered by sortOrder.
 async function HeroCarouselSection() {
   const res = await serverFetch<HeroBanner[]>("/banners", { revalidate: 60 });
 
@@ -33,16 +38,12 @@ async function HeroCarouselSection() {
   return <HeroCarousel banners={res} />;
 }
 
-// Matches the carousel's responsive heights so streaming it in doesn't
-// shift the featured products below it.
 function HeroCarouselSkeleton() {
   return (
-    <div className="w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] bg-gray-200 animate-pulse" />
+    <div className="w-full h-[300px] sm:h-[500px] md:h-[600px] lg:h-[700px] bg-gray-200 animate-pulse" />
   );
 }
 
-// Sits in the whitespace between two stacked sections so each reads as its
-// own block rather than one long grid. Decorative only.
 function SectionDivider() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-hidden>
@@ -55,11 +56,6 @@ function SectionDivider() {
   );
 }
 
-// Everything below the hero is configured in the dashboard, not queried from
-// the catalog. GET /homepage-sections returns every active section already in
-// render order, with its products resolved live from the Products collection
-// — a section stores nothing but the ordered ObjectIds — so this is a single
-// round trip no matter how many sections exist.
 async function HomepageSections() {
   const res = await serverFetch<PublicHomepageSection[]>("/homepage-sections", {
     revalidate: 60,
@@ -76,8 +72,6 @@ async function HomepageSections() {
     );
   }
 
-  // A section with nothing curated yet has nothing to show, so it stays off
-  // the storefront rather than rendering a heading over an empty grid.
   const sections = res.filter((section) => section.products.length > 0);
 
   return sections.map((section, index) => (
@@ -87,6 +81,7 @@ async function HomepageSections() {
         anchorId={section.slug}
         title={section.title}
         products={section.products}
+        viewAllHref={`/${section.slug}`}
       />
     </Fragment>
   ));
@@ -94,8 +89,11 @@ async function HomepageSections() {
 
 function HomepageSectionsSkeleton() {
   return (
-    <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20 animate-pulse">
-      <div className="mx-auto mb-8 sm:mb-12 h-6 sm:h-10 w-40 sm:w-64 rounded bg-gray-200" />
+    <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 animate-pulse">
+      <div className="mb-7 sm:mb-9 lg:mb-11 flex items-center justify-between gap-3 sm:gap-6">
+        <div className="h-6 sm:h-8 w-36 sm:w-56 rounded bg-gray-200" />
+        <div className="h-8 sm:h-10 w-24 sm:w-28 rounded-full bg-gray-200" />
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 lg:gap-6">
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} className="aspect-[4/3] rounded-lg sm:rounded-xl bg-gray-200" />

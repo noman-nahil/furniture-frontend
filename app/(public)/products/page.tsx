@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { PaginatedProductGrid } from "@/components/products/PaginatedProductGrid";
 import type { ListProduct } from "@/components/products/PaginatedProductGrid";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { APP_NAME } from "@/lib/config";
 
 export const revalidate = 60;
 
@@ -41,30 +43,20 @@ export async function generateMetadata({
   const search = parseSearchParam(params.search);
 
   if (search) {
-    return {
-      // ✅ noindex on search result pages — search engines shouldn't index
-      //    /products?search=chair&page=3. These have no stable canonical URL
-      //    and produce duplicate content across different search terms.
-      robots: { index: false, follow: true },
-      title: `Search: ${search} — Products`,
+    return buildPageMetadata({
+      title: `Search: ${search}`,
       description: `Search results for "${search}" in our furniture and home décor catalog.`,
-      openGraph: {
-        title: `Search: ${search} — Products`,
-        description: `Search results for "${search}" in our furniture and home décor catalog.`,
-      },
-    };
+      path: "/products",
+      noIndex: true,
+    });
   }
 
-  return {
+  return buildPageMetadata({
     title: "All Products",
-    description:
-      "Browse our full catalog of furniture and home décor at Meubles De Paris.",
-    openGraph: {
-      title: "All Products",
-      description:
-        "Browse our full catalog of furniture and home décor at Meubles De Paris.",
-    },
-  };
+    description: `Browse our full catalog of furniture and home décor at ${APP_NAME}.`,
+    path: "/products",
+    keywords: ["furniture catalog", "home décor", APP_NAME],
+  });
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {

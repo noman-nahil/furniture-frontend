@@ -4,7 +4,11 @@
 
 export const APP_NAME = "Meubles De Paris";
 export const CURRENCY = "€";
-export const LOGO_PATH = "/Logo.jpeg";
+export const LOGO_PATH = "/Logo.png";
+
+/** Production storefront origin (also set NEXT_PUBLIC_SITE_URL in env). */
+export const PRODUCTION_SITE_URL =
+  "https://furniture-frontend-eosin.vercel.app";
 
 /**
  * Currency code for Intl.NumberFormat

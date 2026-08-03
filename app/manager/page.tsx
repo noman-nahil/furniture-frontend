@@ -8,10 +8,7 @@ import type { LocalizedField } from "@/types/product";
 export const metadata: Metadata = {
   title: "Manager",
   description: "Meubles De Paris manager dashboard.",
-  openGraph: {
-    title: "Manager",
-    description: "Meubles De Paris manager dashboard.",
-  },
+  robots: { index: false, follow: false },
 };
 
 interface Order {

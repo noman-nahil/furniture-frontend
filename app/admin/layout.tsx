@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 import { Providers } from "@/app/providers";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Admin",
+    template: "%s | Admin",
+  },
+  robots: { index: false, follow: false },
+};
+
 export default function AdminLayout({
   children,
 }: {
