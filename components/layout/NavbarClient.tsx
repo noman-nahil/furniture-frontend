@@ -10,10 +10,9 @@ import {
   useLayoutEffect,
 } from "react";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   ShoppingCart,
-  Search,
   Menu,
   X,
   ChevronDown,
@@ -22,6 +21,10 @@ import { getCartItemCount } from "@/lib/cart";
 import { APP_NAME, LOGO_PATH } from "@/lib/config";
 import type { CategoryNav } from "@/types/categoryNav";
 import { useAuth } from "@/contexts/AuthContext";
+import SearchField, {
+  SEARCH_FIELD_INPUT_CLASS,
+} from "@/components/search/SearchField";
+import { useProductSearch } from "@/hooks/useProductSearch";
 
 // ─────────────────────────────────────────────
 // Types
@@ -39,11 +42,6 @@ type NavUser = {
 // ─────────────────────────────────────────────
 
 const DROPDOWN_WIDTH = 192;
-
-// How long to wait after the last keystroke before navigating — long
-// enough that fast typers don't trigger a navigation per character,
-// short enough that it still feels "live".
-const SEARCH_DEBOUNCE_MS = 400;
 
 // ─────────────────────────────────────────────
 // Sub-components
@@ -72,9 +70,8 @@ export default function NavbarClient({
   user: NavUser | null;
 }) {
   const { logout } = useAuth();
-  const pathname     = usePathname();
-  const router       = useRouter();
-  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const search = useProductSearch({ categories });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartItemCount, setCartItemCount]         = useState(0);
@@ -83,18 +80,16 @@ export default function NavbarClient({
   const [isDesktop, setIsDesktop]                 = useState(true);
   const [dropdownPos, setDropdownPos]             = useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted]                     = useState(false);
-  const [searchQuery, setSearchQuery]             = useState("");
 
   const categoriesBarRef  = useRef<HTMLDivElement | null>(null);
   const dropdownPanelRef  = useRef<HTMLDivElement | null>(null);
   const triggerRefs       = useRef<Map<string, HTMLDivElement>>(new Map());
   const leaveTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nameParts = APP_NAME.trim().split(" ");
-const firstWord = nameParts[0];
-const restWords = nameParts.slice(1).join(" ");
-const restChars = restWords.split("");
+  const firstWord = nameParts[0];
+  const restWords = nameParts.slice(1).join(" ");
+  const restChars = restWords.split("");
   // ─── Logout ────────────────────────────────────────────────────────────
 
   const handleLogout = useCallback(() => {
@@ -121,7 +116,6 @@ const restChars = restWords.split("");
   useEffect(() => {
     return () => {
       if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
   }, []);
 
@@ -175,51 +169,6 @@ type TriggerSource = "desktop" | "mobile";
     setOpenCategory(null);
     setIsMobileMenuOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    setSearchQuery(searchParams.get("search") ?? "");
-  }, [searchParams]);
-
-  // ─── Search ────────────────────────────────────────────────────────────
-
-  // Single place that actually navigates — both the debounced live-typing
-  // path and the immediate Enter/button path funnel through this, so
-  // there's one definition of "what does searching actually do" instead
-  // of two that could drift apart. replace() (not push()) so live typing
-  // doesn't fill up browser history with one entry per keystroke — Back
-  // would otherwise need pressing once per character typed.
-  const navigateToSearch = useCallback(
-    (value: string) => {
-      const trimmed = value.trim();
-      router.replace(
-        trimmed ? `/products?search=${encodeURIComponent(trimmed)}` : "/products",
-        { scroll: false }
-      );
-    },
-    [router]
-  );
-
-  const handleSearchInputChange = useCallback(
-    (value: string) => {
-      setSearchQuery(value);
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = setTimeout(() => {
-        navigateToSearch(value);
-      }, SEARCH_DEBOUNCE_MS);
-    },
-    [navigateToSearch]
-  );
-
-  const handleSearchSubmit = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      // Enter fires immediately rather than waiting out the debounce.
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-      navigateToSearch(searchQuery);
-    },
-    [searchQuery, navigateToSearch]
-  );
 
   // ─── Dropdown positioning ──────────────────────────────────────────────
 
@@ -369,24 +318,6 @@ type TriggerSource = "desktop" | "mobile";
         )}
       </div>
     </Link>
-  );
-
-  const searchInput = (className = "w-full h-9 pl-9 pr-3 rounded-lg border border-gray-300 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all") => (
-    <div className="relative w-full">
-      <input
-        type="search"
-        placeholder="Search products..."
-        value={searchQuery}
-        onChange={(e) => handleSearchInputChange(e.target.value)}
-        onKeyDown={handleSearchSubmit}
-        className={className}
-        aria-label="Search products"
-      />
-      {/* <Search
-        className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-        aria-hidden
-      /> */}
-    </div>
   );
 
   const categoriesButton = (
@@ -547,9 +478,11 @@ type TriggerSource = "desktop" | "mobile";
           {logoLink}
 
           <div className="min-w-0 flex-1">
-            {searchInput(
-              "h-9 w-full min-w-0 rounded-lg border border-gray-300 bg-gray-50 pl-9 pr-3 text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500",
-            )}
+            <SearchField
+              search={search}
+              active={!isDesktop}
+                className="h-10 w-full min-w-0 rounded-xl border border-gray-300 bg-white pl-10 pr-10 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm transition-all focus:border-teal-700/40 focus:outline-none focus:ring-2 focus:ring-teal-700"
+            />
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
@@ -578,7 +511,13 @@ type TriggerSource = "desktop" | "mobile";
 
           {/* Row 1 — search + categories button */}
           <div className="col-start-2 row-start-1 flex min-h-12 items-center gap-4">
-            <div className="max-w-md flex-1">{searchInput()}</div>
+            <div className="min-w-0 flex-1 max-w-2xl">
+              <SearchField
+                search={search}
+                active={isDesktop}
+                className={SEARCH_FIELD_INPUT_CLASS}
+              />
+            </div>
             {categoriesButton}
           </div>
 

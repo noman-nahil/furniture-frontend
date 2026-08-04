@@ -24,7 +24,15 @@ export default async function Navbar() {
     // its own while the nav sticks alone.
     <div className="sticky top-0 z-50">
       <TopBar />
-      <Suspense fallback={<div className="h-16 border-b border-gray-200 bg-white" />}>
+      <Suspense
+        fallback={
+          <div className="w-full border-b border-gray-200 bg-white/95">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+              <div className="h-10 max-w-2xl rounded-xl bg-gray-100 animate-pulse" />
+            </div>
+          </div>
+        }
+      >
         <NavbarClient categories={categories} user={user} />
       </Suspense>
     </div>
