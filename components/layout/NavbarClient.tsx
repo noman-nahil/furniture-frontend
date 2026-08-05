@@ -8,6 +8,7 @@ import {
   useRef,
   useCallback,
   useLayoutEffect,
+  Suspense,
 } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
@@ -21,10 +22,11 @@ import { getCartItemCount } from "@/lib/cart";
 import { APP_NAME, LOGO_PATH } from "@/lib/config";
 import type { CategoryNav } from "@/types/categoryNav";
 import { useAuth } from "@/contexts/AuthContext";
-import SearchField, {
+import {
+  NavbarSearchField,
+  NavbarSearchProvider,
   SEARCH_FIELD_INPUT_CLASS,
-} from "@/components/search/SearchField";
-import { useProductSearch } from "@/hooks/useProductSearch";
+} from "@/components/layout/NavbarSearch";
 
 // ─────────────────────────────────────────────
 // Types
@@ -42,6 +44,13 @@ type NavUser = {
 // ─────────────────────────────────────────────
 
 const DROPDOWN_WIDTH = 192;
+
+/** Hardcoded home link — always first in the category bar. */
+const MAISON_LABEL = "MAISON";
+const MAISON_HREF = "/";
+
+const CATEGORY_LINK_CLASS =
+  "flex shrink-0 items-center gap-1 border-b-2 pb-1 text-sm font-bold whitespace-nowrap transition-colors duration-200";
 
 // ─────────────────────────────────────────────
 // Sub-components
@@ -62,7 +71,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 // Main component
 // ─────────────────────────────────────────────
 
-export default function NavbarClient({
+function NavbarClientInner({
   categories,
   user,
 }: {
@@ -71,7 +80,6 @@ export default function NavbarClient({
 }) {
   const { logout } = useAuth();
   const pathname = usePathname();
-  const search = useProductSearch({ categories });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartItemCount, setCartItemCount]         = useState(0);
@@ -383,6 +391,8 @@ type TriggerSource = "desktop" | "mobile";
     </div>
   );
 
+  const isMaisonActive = pathname === "/" || pathname === "";
+
   const renderCategoryLinks = (source: TriggerSource) =>
     categories.map((cat) => {
       const subs = cat.subcategories ?? [];
@@ -399,7 +409,7 @@ type TriggerSource = "desktop" | "mobile";
           <Link
             key={cat.slug}
             href={`/category/${cat.slug}`}
-            className={`flex shrink-0 items-center gap-1 border-b-2 pb-1 text-sm font-bold whitespace-nowrap transition-colors duration-200 ${
+            className={`${CATEGORY_LINK_CLASS} ${
               active
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-700 hover:border-blue-600 hover:text-blue-600"
@@ -468,6 +478,22 @@ type TriggerSource = "desktop" | "mobile";
       );
     });
 
+  const categoryBar = (source: TriggerSource) => (
+    <>
+      <Link
+        href={MAISON_HREF}
+        className={`${CATEGORY_LINK_CLASS} ${
+          isMaisonActive
+            ? "border-teal-700 text-teal-800"
+            : "border-transparent text-gray-700 hover:border-teal-700 hover:text-teal-800"
+        }`}
+      >
+        {MAISON_LABEL}
+      </Link>
+      {renderCategoryLinks(source)}
+    </>
+  );
+
   // ─── Render ────────────────────────────────────────────────────────────
 
   return (
@@ -478,10 +504,9 @@ type TriggerSource = "desktop" | "mobile";
           {logoLink}
 
           <div className="min-w-0 flex-1">
-            <SearchField
-              search={search}
+            <NavbarSearchField
               active={!isDesktop}
-                className="h-10 w-full min-w-0 rounded-xl border border-gray-300 bg-white pl-10 pr-10 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm transition-all focus:border-teal-700/40 focus:outline-none focus:ring-2 focus:ring-teal-700"
+              className="h-10 w-full min-w-0 rounded-xl border border-gray-300 bg-white pl-10 pr-10 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm transition-all focus:border-teal-700/40 focus:outline-none focus:ring-2 focus:ring-teal-700"
             />
           </div>
 
@@ -512,8 +537,7 @@ type TriggerSource = "desktop" | "mobile";
           {/* Row 1 — search + categories button */}
           <div className="col-start-2 row-start-1 flex min-h-12 items-center gap-4">
             <div className="min-w-0 flex-1 max-w-2xl">
-              <SearchField
-                search={search}
+              <NavbarSearchField
                 active={isDesktop}
                 className={SEARCH_FIELD_INPUT_CLASS}
               />
@@ -534,7 +558,7 @@ type TriggerSource = "desktop" | "mobile";
             className="col-span-2 col-start-2 row-start-2 min-h-12"
           >
             <div className="flex items-center gap-4 overflow-x-auto py-2 sm:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {renderCategoryLinks("desktop")}
+              {categoryBar("desktop")}
             </div>
           </div>
         </div>
@@ -542,6 +566,13 @@ type TriggerSource = "desktop" | "mobile";
         {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="space-y-1 border-t border-gray-200 py-4 lg:hidden">
+            <Link
+              href={MAISON_HREF}
+              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {MAISON_LABEL}
+            </Link>
             <Link
               href="/products"
               className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
@@ -607,7 +638,7 @@ type TriggerSource = "desktop" | "mobile";
             className="min-h-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             <div className="flex items-center gap-4 overflow-x-auto py-2 sm:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {renderCategoryLinks("mobile")}
+              {categoryBar("mobile")}
             </div>
           </div>
         </div>
@@ -615,5 +646,26 @@ type TriggerSource = "desktop" | "mobile";
 
       {dropdownNode}
     </nav>
+  );
+}
+
+/**
+ * Search suspends (useSearchParams) inside NavbarSearchProvider only.
+ * Fallback renders the same chrome with a search skeleton so MAISON +
+ * categories appear immediately.
+ */
+export default function NavbarClient({
+  categories,
+  user,
+}: {
+  categories: CategoryNav[];
+  user: NavUser | null;
+}) {
+  return (
+    <Suspense fallback={<NavbarClientInner categories={categories} user={user} />}>
+      <NavbarSearchProvider categories={categories}>
+        <NavbarClientInner categories={categories} user={user} />
+      </NavbarSearchProvider>
+    </Suspense>
   );
 }

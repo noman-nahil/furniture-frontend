@@ -2,7 +2,7 @@
 "use client";
 
 import { memo } from "react";
-import { Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Loader2 } from "lucide-react";
 import { getImageUrl } from "@/lib/image";
 import { STATUS_META } from "../constants";
 import { parentCategoryLabel } from "../utils/subcategoryFilters";
@@ -10,7 +10,7 @@ import { SubcategoryCatalogEmpty } from "./SubcategoryCatalogEmpty";
 import { SubcategoryRowMenu } from "./SubcategoryRowMenu";
 import type { Category, Subcategory, SubcategoryStatusFilter } from "../types";
 
-const COL_SPAN = 6;
+const COL_SPAN = 7;
 
 type SubcategoryTableProps = {
   subcategories: Subcategory[];
@@ -28,9 +28,15 @@ type SubcategoryTableProps = {
   onToggleAllVisible: () => void;
   onEdit: (subcategory: Subcategory) => void;
   onDelete: (id: string) => void;
+  onMove?: (subcategory: Subcategory, direction: -1 | 1) => void;
   onAddSubcategory?: () => void;
   onClearFilters?: () => void;
   canDelete: boolean;
+  canReorder?: boolean;
+  reordering?: boolean;
+  /** Index inside the reorder scope (siblings under the filtered parent). */
+  orderIndexById?: Map<string, number>;
+  orderLength?: number;
   onPageChange: (page: number) => void;
 };
 
@@ -50,9 +56,14 @@ function SubcategoryTableComponent({
   onToggleAllVisible,
   onEdit,
   onDelete,
+  onMove,
   onAddSubcategory,
   onClearFilters,
   canDelete,
+  canReorder = false,
+  reordering = false,
+  orderIndexById,
+  orderLength = 0,
   onPageChange,
 }: SubcategoryTableProps) {
   const visibleIds = subcategories.map((s) => s._id);
@@ -137,9 +148,14 @@ function SubcategoryTableComponent({
                   selected={selectedSubcategoryIds.includes(s._id)}
                   parentLabel={parentCategoryLabel(s, categories)}
                   canDelete={canDelete}
+                  canReorder={canReorder}
+                  reordering={reordering}
+                  orderIndex={orderIndexById?.get(s._id) ?? -1}
+                  orderLength={orderLength}
                   onToggle={() => onToggleSubcategory(s._id)}
                   onEdit={() => onEdit(s)}
                   onDelete={() => onDelete(s._id)}
+                  onMove={onMove ? (dir) => onMove(s, dir) : undefined}
                 />
               ))}
             </div>
@@ -156,6 +172,7 @@ function SubcategoryTableComponent({
                       aria-label="Select all visible"
                     />
                   </th>
+                  <th className="px-4 py-3 font-medium">Order</th>
                   <th className="px-4 py-3 font-medium">Subcategory</th>
                   <th className="px-4 py-3 font-medium">Parent category</th>
                   <th className="px-4 py-3 font-medium">Slug</th>
@@ -173,9 +190,14 @@ function SubcategoryTableComponent({
                     selected={selectedSubcategoryIds.includes(s._id)}
                     parentLabel={parentCategoryLabel(s, categories)}
                     canDelete={canDelete}
+                    canReorder={canReorder}
+                    reordering={reordering}
+                    orderIndex={orderIndexById?.get(s._id) ?? -1}
+                    orderLength={orderLength}
                     onToggle={() => onToggleSubcategory(s._id)}
                     onEdit={() => onEdit(s)}
                     onDelete={() => onDelete(s._id)}
+                    onMove={onMove ? (dir) => onMove(s, dir) : undefined}
                   />
                 ))}
               </tbody>
@@ -221,12 +243,66 @@ type SubcategoryRowProps = {
   selected: boolean;
   parentLabel: string;
   canDelete: boolean;
+  canReorder?: boolean;
+  reordering?: boolean;
+  orderIndex?: number;
+  orderLength?: number;
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onMove?: (direction: -1 | 1) => void;
 };
 
 type SubcategoryMobileCardProps = SubcategoryRowProps;
+
+function OrderControls({
+  name,
+  sortOrder,
+  canReorder,
+  reordering,
+  orderIndex,
+  orderLength,
+  onMove,
+}: {
+  name: string;
+  sortOrder: number;
+  canReorder?: boolean;
+  reordering?: boolean;
+  orderIndex?: number;
+  orderLength?: number;
+  onMove?: (direction: -1 | 1) => void;
+}) {
+  const index = orderIndex ?? -1;
+  const lastIndex = (orderLength ?? 0) - 1;
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-6 font-mono text-[11px] text-slate-500">{sortOrder}</span>
+      {canReorder && onMove && (
+        <div className="flex flex-col gap-0.5">
+          <button
+            type="button"
+            onClick={() => onMove(-1)}
+            disabled={reordering || index <= 0}
+            className="rounded border border-slate-700 p-0.5 text-slate-300 hover:bg-slate-800 disabled:opacity-30"
+            aria-label={`Move ${name} up`}
+          >
+            <ArrowUp className="h-3 w-3" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMove(1)}
+            disabled={reordering || index < 0 || index >= lastIndex}
+            className="rounded border border-slate-700 p-0.5 text-slate-300 hover:bg-slate-800 disabled:opacity-30"
+            aria-label={`Move ${name} down`}
+          >
+            <ArrowDown className="h-3 w-3" aria-hidden />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function StatusBadge({ isActive, className = "" }: { isActive: boolean; className?: string }) {
   const meta = STATUS_META[isActive ? "active" : "inactive"];
@@ -265,9 +341,14 @@ function SubcategoryMobileCard({
   selected,
   parentLabel,
   canDelete,
+  canReorder,
+  reordering,
+  orderIndex,
+  orderLength,
   onToggle,
   onEdit,
   onDelete,
+  onMove,
 }: SubcategoryMobileCardProps) {
   return (
     <div
@@ -300,6 +381,15 @@ function SubcategoryMobileCard({
         {s.slug && <p className="mt-2 truncate font-mono text-[11px] text-slate-500">{s.slug}</p>}
         <div className="mt-2 flex items-center gap-3 text-xs">
           <StatusBadge isActive={s.isActive} />
+          <OrderControls
+            name={s.name}
+            sortOrder={s.sortOrder ?? 0}
+            canReorder={canReorder}
+            reordering={reordering}
+            orderIndex={orderIndex}
+            orderLength={orderLength}
+            onMove={onMove}
+          />
         </div>
       </div>
     </div>
@@ -311,9 +401,14 @@ const SubcategoryRow = memo(function SubcategoryRow({
   selected,
   parentLabel,
   canDelete,
+  canReorder,
+  reordering,
+  orderIndex,
+  orderLength,
   onToggle,
   onEdit,
   onDelete,
+  onMove,
 }: SubcategoryRowProps) {
   return (
     <tr
@@ -328,6 +423,17 @@ const SubcategoryRow = memo(function SubcategoryRow({
           onChange={onToggle}
           className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-amber-500"
           aria-label={`Select ${s.name}`}
+        />
+      </td>
+      <td className="px-4 py-3.5 align-middle">
+        <OrderControls
+          name={s.name}
+          sortOrder={s.sortOrder ?? 0}
+          canReorder={canReorder}
+          reordering={reordering}
+          orderIndex={orderIndex}
+          orderLength={orderLength}
+          onMove={onMove}
         />
       </td>
       <td className="px-4 py-3.5 align-middle">

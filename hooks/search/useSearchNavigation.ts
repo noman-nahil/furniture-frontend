@@ -15,7 +15,10 @@ import {
   isSearchableQuery,
   normalizeSearch,
 } from "@/lib/search/normalize";
-import { shouldAutoRefineOnType } from "@/lib/search/navigationPolicy";
+import {
+  shouldAutoRefineOnType,
+  shouldKeepSearchQuery,
+} from "@/lib/search/navigationPolicy";
 
 /**
  * URL sync + push/replace navigation for catalog search.
@@ -40,17 +43,27 @@ export function useSearchNavigation() {
   }, []);
 
   // URL → input sync
+  // Keep query on /products results and /products/[slug] PDP.
+  // Clear when leaving via category / home / other nav routes.
   useEffect(() => {
-    if (searchDirtyRef.current || searchDebounceRef.current != null) return;
-
-    const urlSearch = searchParams.get("search") ?? "";
-
-    if (pathname !== "/products") {
-      if (urlSearch) setSearchQuery(urlSearch);
+    if (!shouldKeepSearchQuery(pathname)) {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+      searchDirtyRef.current = false;
+      setSearchQuery("");
       return;
     }
 
-    setSearchQuery(urlSearch);
+    // Product detail: keep whatever is already in the box (no ?search= on PDP).
+    if (pathname.startsWith("/products/")) {
+      return;
+    }
+
+    // Results page: mirror ?search=
+    if (searchDirtyRef.current || searchDebounceRef.current != null) return;
+    setSearchQuery(searchParams.get("search") ?? "");
   }, [searchParams, pathname]);
 
   const navigateToSearch = useCallback(

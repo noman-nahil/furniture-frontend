@@ -25,6 +25,7 @@ export const STATUS_META: Record<
 export const EMPTY_FORM: SubcategoryFormValues = {
   name: "",
   parentCategory: "",
+  sortOrder: "",
   isActive: true,
 };
 
@@ -40,6 +41,7 @@ export const ROLE_PERMISSIONS = {
     canDelete: true,
     canBulkUpdate: true,
     canBulkDelete: true,
+    canReorder: true,
   },
   manager: {
     canCreate: true,
@@ -47,5 +49,6 @@ export const ROLE_PERMISSIONS = {
     canDelete: false,
     canBulkUpdate: true,
     canBulkDelete: false,
+    canReorder: true,
   },
 } as const;

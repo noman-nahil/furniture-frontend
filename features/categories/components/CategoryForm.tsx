@@ -68,6 +68,24 @@ export function CategoryForm({ formState }: CategoryFormProps) {
         </div>
 
         <div>
+          <label htmlFor="category-sort-order" className="mb-1 block text-xs font-medium text-slate-200">
+            Sort order
+          </label>
+          <input
+            id="category-sort-order"
+            type="number"
+            min={0}
+            value={form.sortOrder}
+            onChange={(e) => handleChange("sortOrder", e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-50 outline-none focus:ring-1 focus:ring-slate-300"
+            placeholder="Auto (append)"
+          />
+          <p className="mt-1 text-[10px] text-slate-500">
+            Lower numbers appear first in the navbar. Leave blank to append.
+          </p>
+        </div>
+
+        <div>
           <label className="mb-1.5 block text-xs font-medium text-slate-200">Image</label>
           <CategoryImageUploader
             staged={imageUploader.staged}

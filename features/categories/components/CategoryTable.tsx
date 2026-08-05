@@ -1,5 +1,7 @@
 // features/categories/components/CategoryTable.tsx
+"use client";
 
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { getImageUrl } from "@/lib/image";
 import type { Category } from "../types";
 
@@ -10,7 +12,10 @@ type CategoryTableProps = {
   onSearchChange: (value: string) => void;
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
+  onMove: (category: Category, direction: -1 | 1) => void;
   canDelete: boolean;
+  canReorder: boolean;
+  reordering: boolean;
 };
 
 export function CategoryTable({
@@ -20,8 +25,13 @@ export function CategoryTable({
   onSearchChange,
   onEdit,
   onDelete,
+  onMove,
   canDelete,
+  canReorder,
+  reordering,
 }: CategoryTableProps) {
+  const lastIndex = categories.length - 1;
+
   return (
     <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/60">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
@@ -41,6 +51,7 @@ export function CategoryTable({
         <table className="w-full text-left text-xs text-slate-300">
           <thead className="bg-slate-900/80 text-slate-400">
             <tr>
+              <th className="px-4 py-2 font-medium">Order</th>
               <th className="px-4 py-2 font-medium">Name</th>
               <th className="px-4 py-2 font-medium">Image</th>
               <th className="px-4 py-2 font-medium">Slug</th>
@@ -51,13 +62,42 @@ export function CategoryTable({
           <tbody>
             {categories.length === 0 && !loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
                   No categories match.
                 </td>
               </tr>
             ) : (
-              categories.map((c) => (
+              categories.map((c, index) => (
                 <tr key={c._id} className="border-t border-slate-800/80 hover:bg-slate-900/60">
+                  <td className="px-4 py-2 align-middle">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 font-mono text-[11px] text-slate-500">
+                        {c.sortOrder ?? 0}
+                      </span>
+                      {canReorder && (
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => onMove(c, -1)}
+                            disabled={reordering || index === 0}
+                            className="rounded border border-slate-700 p-0.5 text-slate-300 hover:bg-slate-800 disabled:opacity-30"
+                            aria-label={`Move ${c.name} up`}
+                          >
+                            <ArrowUp className="h-3 w-3" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onMove(c, 1)}
+                            disabled={reordering || index === lastIndex}
+                            className="rounded border border-slate-700 p-0.5 text-slate-300 hover:bg-slate-800 disabled:opacity-30"
+                            aria-label={`Move ${c.name} down`}
+                          >
+                            <ArrowDown className="h-3 w-3" aria-hidden />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-2 align-middle text-slate-50">{c.name}</td>
                   <td className="px-4 py-2 align-middle">
                     <img

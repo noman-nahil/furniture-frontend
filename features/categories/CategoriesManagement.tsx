@@ -2,12 +2,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { ROLE_PERMISSIONS } from "./constants";
 import { useCategoriesQuery } from "./hooks/useCategories";
 import { useCategoryForm } from "./hooks/useCategoryForm";
+import { useReorderCategories } from "./hooks/useCategoryMutations";
 import { categoriesApi } from "./api/categoriesApi";
 import { CategoryTable } from "./components/CategoryTable";
 import type { CategoriesManagementRole, Category } from "./types";
@@ -37,7 +38,7 @@ type CategoriesManagementProps = {
 
 export function CategoriesManagement({
   title = "Categories",
-  description = "Add, edit, or remove product categories. Slug is used in URLs.",
+  description = "Add, edit, or reorder product categories. Order controls the navbar and mega menu.",
   role = "admin",
 }: CategoriesManagementProps) {
   const permissions = ROLE_PERMISSIONS[role];
@@ -52,6 +53,7 @@ export function CategoriesManagement({
     mutationFn: (id: string) => categoriesApi.delete(id),
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ["admin-categories"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
       if (formState.editingId === id) formState.resetForm();
       toast.success("Category deleted.");
       setConfirmDeleteId(null);
@@ -62,6 +64,10 @@ export function CategoriesManagement({
     },
   });
 
+  const reorderCategories = useReorderCategories();
+
+  // Already sorted by the API (sortOrder, then createdAt) — the same order
+  // the storefront navbar uses, so the table is a faithful preview.
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filtered = useMemo(() => {
     if (!normalizedQuery) return categories;
@@ -72,6 +78,28 @@ export function CategoriesManagement({
         c._id.toLowerCase().includes(normalizedQuery)
     );
   }, [categories, normalizedQuery]);
+
+  // Reordering is positional, so it only makes sense against the unfiltered
+  // list — a search would otherwise make "move down" skip hidden rows.
+  const canReorder = permissions.canReorder && !normalizedQuery;
+
+  const handleMove = useCallback(
+    (category: Category, direction: -1 | 1) => {
+      const index = categories.findIndex((c) => c._id === category._id);
+      const target = index + direction;
+      if (index === -1 || target < 0 || target >= categories.length) return;
+
+      const next = [...categories];
+      [next[index], next[target]] = [next[target], next[index]];
+
+      // Send the whole list with compacted positions so sortOrder stays
+      // gap-free no matter what the values were before.
+      reorderCategories.mutate(
+        next.map((c, sortOrder) => ({ id: c._id, sortOrder }))
+      );
+    },
+    [categories, reorderCategories]
+  );
 
   const pendingDelete =
     permissions.canDelete && confirmDeleteId
@@ -104,7 +132,10 @@ export function CategoriesManagement({
           onSearchChange={setSearchQuery}
           onEdit={formState.startEdit}
           onDelete={setConfirmDeleteId}
+          onMove={handleMove}
           canDelete={permissions.canDelete}
+          canReorder={canReorder}
+          reordering={reorderCategories.isPending}
         />
         <CategoryForm formState={formState} />
       </div>

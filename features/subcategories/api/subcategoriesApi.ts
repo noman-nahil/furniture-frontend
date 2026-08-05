@@ -8,6 +8,7 @@ import type {
   BulkUpdateResult,
   Category,
   Subcategory,
+  SubcategoryReorderItem,
 } from "../types";
 
 /** How many fan-out requests a bulk action keeps in flight at once. */
@@ -20,6 +21,7 @@ type RawSubcategory = {
   parentCategory?: { _id?: string; id?: string; name?: string } | string | null;
   image?: string;
   isActive?: boolean;
+  sortOrder?: number;
   createdAt?: string;
 };
 
@@ -46,6 +48,7 @@ function normalizeSubcategory(raw: RawSubcategory): Subcategory {
     parentCategoryName: isPopulated ? (parent.name ?? "") : "",
     image: raw.image || undefined,
     isActive: raw.isActive !== false,
+    sortOrder: raw.sortOrder ?? 0,
     createdAt: raw.createdAt,
   };
 }
@@ -107,6 +110,12 @@ export const subcategoriesApi = {
     normalizeSubcategory(await apiFetch<RawSubcategory>(`/subcategories/${id}`)),
 
   delete: (id: string) => apiFetch<{ success: boolean }>(`/subcategories/${id}`, { method: "DELETE" }),
+
+  reorder: (items: SubcategoryReorderItem[]) =>
+    apiFetch<{ matchedCount: number; modifiedCount: number }>("/subcategories/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({ items }),
+    }),
 
   create: (formData: FormData, signal?: AbortSignal) =>
     sendMultipart("/subcategories", "POST", formData, signal),

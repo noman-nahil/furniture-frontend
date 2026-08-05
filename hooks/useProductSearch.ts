@@ -110,6 +110,12 @@ export function useProductSearch({
     closePanel();
   }, [pathname, closePanel]);
 
+  useEffect(() => {
+    // Drop suggestion cache when leaving search/PDP (e.g. category nav).
+    if (pathname === "/products" || pathname.startsWith("/products/")) return;
+    resetSuggestions();
+  }, [pathname, resetSuggestions]);
+
   const handleInputChange = useCallback(
     (value: string) => {
       const next = setQueryFromInput(value);

@@ -4,7 +4,7 @@ export type SubcategoryStatusKey = "active" | "inactive";
 
 export type SubcategoryStatusFilter = SubcategoryStatusKey | "ALL";
 
-export type Category = { _id: string; name: string };
+export type Category = { _id: string; name: string; sortOrder?: number };
 
 export type Subcategory = {
   _id: string;
@@ -15,6 +15,7 @@ export type Subcategory = {
   parentCategoryName: string;
   image?: string;
   isActive: boolean;
+  sortOrder: number;
   createdAt?: string;
 };
 
@@ -41,7 +42,13 @@ export type SubcategoryFilters = {
 export type SubcategoryFormValues = {
   name: string;
   parentCategory: string;
+  sortOrder: string;
   isActive: boolean;
+};
+
+export type SubcategoryReorderItem = {
+  id: string;
+  sortOrder: number;
 };
 
 export type BulkUpdatePayload = {

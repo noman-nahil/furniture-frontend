@@ -4,11 +4,10 @@ import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { slugify } from "@/lib/slug";
+import { EMPTY_FORM } from "../constants";
 import { categoriesApi } from "../api/categoriesApi";
 import { useCategoryImageUploader } from "./useCategoryImageUploader";
 import type { Category, CategoryFormValues } from "../types";
-
-const EMPTY_FORM: CategoryFormValues = { name: "", slug: "", isActive: true };
 
 export function useCategoryForm() {
   const qc = useQueryClient();
@@ -38,7 +37,12 @@ export function useCategoryForm() {
     (c: Category) => {
       setEditingId(c._id);
       setError(null);
-      setForm({ name: c.name, slug: c.slug, isActive: c.isActive !== false });
+      setForm({
+        name: c.name,
+        slug: c.slug,
+        sortOrder: String(c.sortOrder ?? 0),
+        isActive: c.isActive !== false,
+      });
       setExistingImage(c.image);
       imageUploader.clear();
     },
@@ -65,18 +69,15 @@ export function useCategoryForm() {
       fd.append("name", name);
       fd.append("slug", slug);
       fd.append("isActive", String(form.isActive));
+      if (form.sortOrder.trim()) {
+        fd.append("sortOrder", form.sortOrder.trim());
+      }
       // Only append if a new file was actually staged — the backend
       // (categoryService.updateCategory) only replaces the image when
       // req.file is present, leaving the existing one untouched otherwise.
       if (imageUploader.staged?.file) {
         fd.append("image", imageUploader.staged.file);
       } else if (imageUploader.removeExisting) {
-        // NEW: was never sent before — the "remove existing image" UI
-        // control set imageUploader.removeExisting state, but nothing
-        // forwarded that intent into the submitted FormData, so
-        // categoryController.update always received removeImage as
-        // false regardless of what the admin clicked. This is what
-        // actually wires the remove-image feature to the backend.
         fd.append("removeImage", "true");
       }
 
@@ -90,6 +91,7 @@ export function useCategoryForm() {
           toast.success("Category created.");
         }
         qc.invalidateQueries({ queryKey: ["admin-categories"] });
+        qc.invalidateQueries({ queryKey: ["categories"] });
         resetForm();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to save category.");

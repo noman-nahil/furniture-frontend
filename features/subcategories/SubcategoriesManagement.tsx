@@ -5,7 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DEFAULT_PAGE_SIZE, ROLE_PERMISSIONS } from "./constants";
 import { useCategoriesQuery, useSubcategoriesQuery } from "./hooks/useSubcategories";
 import { useSubcategoryForm } from "./hooks/useSubcategoryForm";
-import { useBulkDelete, useBulkUpdate, useDeleteSubcategory } from "./hooks/useBulkUpdate";
+import {
+  useBulkDelete,
+  useBulkUpdate,
+  useDeleteSubcategory,
+  useReorderSubcategories,
+} from "./hooks/useBulkUpdate";
 import { selectSubcategoryPage } from "./utils/subcategoryFilters";
 import { SubcategoryTable } from "./components/SubcategoryTable";
 import { SubcategoryFiltersToolbar } from "./components/SubcategoryFiltersToolbar";
@@ -23,7 +28,7 @@ type SubcategoriesManagementProps = {
 
 export function SubcategoriesManagement({
   title = "Subcategories",
-  description = "Organize the catalog under each parent category.",
+  description = "Organize the catalog under each parent category. Filter by parent to reorder siblings.",
   role = "admin",
 }: SubcategoriesManagementProps) {
   const permissions = ROLE_PERMISSIONS[role];
@@ -134,6 +139,44 @@ export function SubcategoriesManagement({
   const deleteSubcategory = useDeleteSubcategory();
   const bulkUpdate = useBulkUpdate();
   const bulkDelete = useBulkDelete();
+  const reorderSubcategories = useReorderSubcategories();
+
+  // Reorder only within siblings of one parent — same move-up/down + PATCH
+  // /reorder contract as banners. Search / status filters would skip rows.
+  const reorderScope = useMemo(() => {
+    if (!selectedCategory) return [];
+    return allSubcategories
+      .filter((s) => s.parentCategoryId === selectedCategory)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  }, [allSubcategories, selectedCategory]);
+
+  const orderIndexById = useMemo(() => {
+    const map = new Map<string, number>();
+    reorderScope.forEach((s, index) => map.set(s._id, index));
+    return map;
+  }, [reorderScope]);
+
+  const canReorder =
+    permissions.canReorder &&
+    Boolean(selectedCategory) &&
+    searchQuery.trim() === "" &&
+    selectedStatus === "ALL";
+
+  const handleMove = useCallback(
+    (subcategory: Subcategory, direction: -1 | 1) => {
+      const index = reorderScope.findIndex((s) => s._id === subcategory._id);
+      const target = index + direction;
+      if (index === -1 || target < 0 || target >= reorderScope.length) return;
+
+      const next = [...reorderScope];
+      [next[index], next[target]] = [next[target], next[index]];
+
+      reorderSubcategories.mutate(
+        next.map((s, sortOrder) => ({ id: s._id, sortOrder })),
+      );
+    },
+    [reorderScope, reorderSubcategories],
+  );
 
   function toggleSubcategory(id: string) {
     setSelectedSubcategoryIds((prev) =>
@@ -209,6 +252,13 @@ export function SubcategoriesManagement({
           filteredTotal={total}
         />
 
+        {!canReorder && permissions.canReorder && (
+          <p className="text-xs text-slate-500">
+            Select a parent category (and clear search / status filters) to reorder siblings with the
+            up/down controls.
+          </p>
+        )}
+
         <SubcategoryTable
           subcategories={subcategories}
           total={total}
@@ -225,9 +275,14 @@ export function SubcategoriesManagement({
           onToggleAllVisible={toggleAllVisible}
           onEdit={openEditForm}
           onDelete={setConfirmDeleteId}
+          onMove={handleMove}
           onAddSubcategory={openCreateForm}
           onClearFilters={handleClearFilters}
           canDelete={permissions.canDelete}
+          canReorder={canReorder}
+          reordering={reorderSubcategories.isPending}
+          orderIndexById={orderIndexById}
+          orderLength={reorderScope.length}
           onPageChange={setPage}
         />
       </div>

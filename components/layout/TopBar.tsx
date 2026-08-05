@@ -1,20 +1,29 @@
-// components/layout/TopBar.tsx
-import Link from "next/link";
+"use client";
 
-// ── Placeholder content — replace these two things ─────────────────────
-// TAGLINE_TEXT: your real store hours / promo message / shipping note.
-// SOCIAL_LINKS: your real profile URLs. Left as "#" so nothing breaks,
-// but they don't go anywhere until you fill them in.
-//
-// If you'd rather manage this from lib/config.ts alongside APP_NAME and
-// LOGO_PATH instead of here, paste me that file and I'll move it there.
-const TAGLINE_TEXT = "Open every day, 9:30am – 8pm, including holidays.";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+// ── Placeholder content — replace these if needed ──────────────────────
+// Tagline alternates EN ↔ FR every second with the background cycle.
+const TAGLINE_EN = "Open every day, 9:30am – 8pm, including holidays.";
+const TAGLINE_FR =
+  "Ouvert tous les jours, 9h30 – 20h, y compris les jours fériés.";
 
 const SOCIAL_LINKS = {
   facebook: "#",
   instagram: "#",
   tiktok: "#",
 };
+
+/** Existing teal-700, then the requested palette — one step per second. */
+const BG_COLORS = [
+  "#0f766e", // existing teal-700
+  "#0f8677",
+  "#28a745",
+  "#17a2b8",
+  "#ffc107",
+  "#dc3545",
+] as const;
 
 function FacebookIcon() {
   return (
@@ -50,10 +59,40 @@ function TikTokIcon() {
 }
 
 export default function TopBar() {
+  const [colorIndex, setColorIndex] = useState(0);
+  const [isFrench, setIsFrench] = useState(false);
+  const bg = BG_COLORS[colorIndex];
+  const tagline = isFrench ? TAGLINE_FR : TAGLINE_EN;
+  // Yellow needs dark text for contrast; others stay white.
+  const onYellow = bg.toLowerCase() === "#ffc107";
+
+  // Background color — every 1s
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setColorIndex((i) => (i + 1) % BG_COLORS.length);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Language — 5s English, then 5s French, repeat
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setIsFrench((fr) => !fr);
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, []);
+
   return (
-    <div className="w-full bg-teal-700 text-white text-xs sm:text-sm">
+    <div
+      className={`w-full text-xs sm:text-sm transition-colors duration-500 ${
+        onYellow ? "text-gray-900" : "text-white"
+      }`}
+      style={{ backgroundColor: bg }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-between gap-4">
-        <p className="truncate">{TAGLINE_TEXT}</p>
+        <p className="truncate pl-6" lang={isFrench ? "fr" : "en"}>
+          {tagline}
+        </p>
 
         <div className="flex items-center gap-3 shrink-0">
           <Link

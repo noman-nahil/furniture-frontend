@@ -60,7 +60,8 @@ export function selectSubcategoryPage(
   const matched =
     status === "ALL" ? scoped : scoped.filter((s) => (status === "active" ? s.isActive : !s.isActive));
 
-  const sorted = [...matched].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  // Preserve API / manual order (sortOrder ASC). Do not fall back to name or createdAt.
+  const sorted = [...matched].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
   const total = sorted.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));

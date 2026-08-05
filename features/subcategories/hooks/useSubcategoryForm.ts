@@ -48,6 +48,7 @@ export function useSubcategoryForm(onSaved?: (subcategory: Subcategory) => void)
   const isDirty =
     form.name.trim() !== "" ||
     form.parentCategory !== "" ||
+    form.sortOrder.trim() !== "" ||
     staged != null ||
     removeExisting;
 
@@ -74,6 +75,7 @@ export function useSubcategoryForm(onSaved?: (subcategory: Subcategory) => void)
       setForm({
         name: s.name,
         parentCategory: s.parentCategoryId,
+        sortOrder: String(s.sortOrder ?? 0),
         isActive: s.isActive,
       });
       setExistingImage(s.image);
@@ -102,6 +104,9 @@ export function useSubcategoryForm(onSaved?: (subcategory: Subcategory) => void)
       fd.append("name", form.name.trim());
       fd.append("parentCategory", form.parentCategory);
       fd.append("isActive", String(form.isActive));
+      if (form.sortOrder.trim()) {
+        fd.append("sortOrder", form.sortOrder.trim());
+      }
 
       // The backend only replaces the image when a file is present, so the
       // explicit "remove, don't replace" intent needs its own flag.

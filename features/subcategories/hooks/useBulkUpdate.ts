@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { subcategoriesApi } from "../api/subcategoriesApi";
 import { invalidateSubcategories } from "./useSubcategories";
-import type { BulkUpdatePayload } from "../types";
+import type { BulkUpdatePayload, SubcategoryReorderItem } from "../types";
 
 function noun(count: number): string {
   return count === 1 ? "subcategory" : "subcategories";
@@ -64,6 +64,20 @@ export function useDeleteSubcategory() {
     },
     onError: (err: unknown) => {
       toast.error(err instanceof Error ? err.message : "Failed to delete subcategory.");
+    },
+  });
+}
+
+export function useReorderSubcategories() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (items: SubcategoryReorderItem[]) => subcategoriesApi.reorder(items),
+    onSuccess: () => {
+      invalidateSubcategories(qc);
+    },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to reorder subcategories.");
     },
   });
 }

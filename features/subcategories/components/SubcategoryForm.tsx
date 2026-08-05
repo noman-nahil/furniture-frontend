@@ -110,6 +110,26 @@ export function SubcategoryForm({ formState, categories, formId }: SubcategoryFo
                 Inactive subcategories stay hidden from the storefront.
               </p>
             </div>
+            <div>
+              <label
+                htmlFor="subcategory-sort-order"
+                className="mb-1 block text-xs font-medium text-slate-200"
+              >
+                Sort order
+              </label>
+              <input
+                id="subcategory-sort-order"
+                type="number"
+                min={0}
+                value={form.sortOrder}
+                onChange={(e) => handleChange("sortOrder", e.target.value)}
+                className={inputClass}
+                placeholder="Auto (append under parent)"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Lower numbers appear first under the parent. Leave blank to append.
+              </p>
+            </div>
           </div>
         </SubcategoryFormSection>
 
