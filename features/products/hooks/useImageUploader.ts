@@ -70,6 +70,16 @@ export function useImageUploader(existingCount: number = 0) {
     });
   }, []);
 
+  const moveFile = useCallback((index: number, direction: -1 | 1) => {
+    setFiles((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }, []);
+
   // Stable reset — do not close over `files`, or every upload/keystroke
   // parent re-render recreates reset → resetForm → modal onClose.
   const reset = useCallback(() => {
@@ -86,7 +96,7 @@ export function useImageUploader(existingCount: number = 0) {
   const remaining = Math.max(0, MAX_IMAGES - existingCount - files.length);
 
   return useMemo(
-    () => ({ files, addFiles, removeFile, reset, hasErrors, remaining }),
-    [files, addFiles, removeFile, reset, hasErrors, remaining],
+    () => ({ files, addFiles, removeFile, moveFile, reset, hasErrors, remaining }),
+    [files, addFiles, removeFile, moveFile, reset, hasErrors, remaining],
   );
 }

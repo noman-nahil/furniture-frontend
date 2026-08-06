@@ -111,16 +111,22 @@ export function useProductForm(onSaved?: (product: Product) => void) {
   const [saving, setSaving] = useState(false);
 
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [originalImageOrder, setOriginalImageOrder] = useState<string[]>([]);
   const [removedExistingKeys, setRemovedExistingKeys] = useState<string[]>([]);
   const activeExistingImages = existingImages.filter((k) => !removedExistingKeys.includes(k));
 
   const imageUploader = useImageUploader(activeExistingImages.length);
 
+  const imagesOrderDirty =
+    activeExistingImages.join("|") !==
+    originalImageOrder.filter((k) => !removedExistingKeys.includes(k)).join("|");
+
   const isDirty =
     form.name.fr.trim() !== "" ||
     form.price !== "" ||
     imageUploader.files.length > 0 ||
-    removedExistingKeys.length > 0;
+    removedExistingKeys.length > 0 ||
+    imagesOrderDirty;
 
   const handleChange = useCallback(
     <K extends keyof ProductFormValues>(field: K, value: ProductFormValues[K]) => {
@@ -164,6 +170,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
     setForm({ ...EMPTY_FORM });
     setError(null);
     setExistingImages([]);
+    setOriginalImageOrder([]);
     setRemovedExistingKeys([]);
     resetImages();
   }, [resetImages]);
@@ -200,7 +207,9 @@ export function useProductForm(onSaved?: (product: Product) => void) {
         },
         noIndex: p.noIndex ?? false,
       });
-      setExistingImages(p.images ?? []);
+      const images = p.images ?? [];
+      setExistingImages(images);
+      setOriginalImageOrder(images);
       setRemovedExistingKeys([]);
       resetImages();
     },
@@ -210,6 +219,21 @@ export function useProductForm(onSaved?: (product: Product) => void) {
   const removeExistingImage = useCallback((key: string) => {
     setRemovedExistingKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
   }, []);
+
+  const moveExistingImage = useCallback(
+    (index: number, direction: -1 | 1) => {
+      setExistingImages((prev) => {
+        const active = prev.filter((k) => !removedExistingKeys.includes(k));
+        const target = index + direction;
+        if (target < 0 || target >= active.length) return prev;
+        const nextActive = [...active];
+        [nextActive[index], nextActive[target]] = [nextActive[target], nextActive[index]];
+        const removed = prev.filter((k) => removedExistingKeys.includes(k));
+        return [...nextActive, ...removed];
+      });
+    },
+    [removedExistingKeys],
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -235,6 +259,8 @@ export function useProductForm(onSaved?: (product: Product) => void) {
 
         if (editingId) {
           removedExistingKeys.forEach((key) => fd.append("removeImages", key));
+          // Persist gallery order (first key = primary / card thumbnail).
+          activeExistingImages.forEach((key) => fd.append("imageOrder", key));
           const updated = await productsApi.update(editingId, fd);
           qc.invalidateQueries({ queryKey: ["products"] });
           toast.success("Product updated.");
@@ -253,7 +279,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
         setSaving(false);
       }
     },
-    [editingId, form, imageUploader, onSaved, qc, resetForm, removedExistingKeys]
+    [editingId, form, imageUploader, onSaved, qc, resetForm, removedExistingKeys, activeExistingImages]
   );
 
   return useMemo(
@@ -266,6 +292,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       imageUploader,
       activeExistingImages,
       removeExistingImage,
+      moveExistingImage,
       handleChange,
       handleNameChange,
       handleDescriptionChange,
@@ -284,6 +311,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       imageUploader,
       activeExistingImages,
       removeExistingImage,
+      moveExistingImage,
       handleChange,
       handleNameChange,
       handleDescriptionChange,

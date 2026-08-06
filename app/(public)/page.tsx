@@ -96,15 +96,15 @@ async function CategoriesBrowseSection() {
         <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
           <div className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-[#B8935A]" />
           <span className="text-xs sm:text-sm font-semibold text-[#B8935A] uppercase tracking-wider">
-            Browse
+          Parcourir
           </span>
           <div className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-[#B8935A]" />
         </div>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
-          Shop by category
+        Toutes les catégories
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base lg:text-lg">
-          Find exactly what you&apos;re looking for, organized by room and style
+        Trouvez exactement ce que vous recherchez, organisé par pièce et par style
         </p>
       </div>
 
@@ -125,7 +125,7 @@ async function CategoriesBrowseSection() {
           href="/categories"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#B8935A] underline-offset-4 hover:underline"
         >
-          View all categories
+        Voir toutes les catégories
         </Link>
       </div>
     </section>

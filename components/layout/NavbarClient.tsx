@@ -302,7 +302,7 @@ type TriggerSource = "desktop" | "mobile";
   const logoLink = (
     <Link
       href="/"
-      className="flex items-center gap-3 shrink-0 group"
+      className="flex items-center gap-0 shrink-0 group md:gap-3"
     >
       <div className="relative h-16 w-16 shrink-0 md:h-20 md:w-20 lg:h-24 lg:w-24">
         <Image
@@ -313,12 +313,12 @@ type TriggerSource = "desktop" | "mobile";
           priority
         />
       </div>
-      <div className="flex flex-col items-stretch leading-none px-1">
-        <span className="uppercase font-serif text-lg font-semibold text-teal-700 transition-colors duration-200 md:text-xl lg:text-2xl whitespace-nowrap">
+      <div className="flex flex-col items-stretch leading-none px-0 md:px-1">
+        <span className="uppercase font-serif text-sm font-semibold text-teal-700 transition-colors duration-200 md:text-xl lg:text-2xl whitespace-nowrap">
           {firstWord}
         </span>
         {restChars.length > 0 && (
-          <span className="-mt-1 font-serif flex justify-between text-lg font-medium uppercase text-teal-700 ">
+          <span className="-mt-0.5 font-serif flex justify-between text-sm font-medium uppercase text-teal-700 md:-mt-1 md:text-lg">
             {restChars.map((char, i) => (
               <span key={i}>{char === " " ? "\u00A0\u00A0" : char}</span>
             ))}
@@ -503,7 +503,7 @@ type TriggerSource = "desktop" | "mobile";
         <div className="flex min-h-14 items-center gap-2 py-2 lg:hidden">
           {logoLink}
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pl-2 ml-1">
             <NavbarSearchField
               active={!isDesktop}
               className="h-10 w-full min-w-0 rounded-xl border border-gray-300 bg-white pl-10 pr-10 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm transition-all focus:border-teal-700/40 focus:outline-none focus:ring-2 focus:ring-teal-700"
@@ -511,8 +511,6 @@ type TriggerSource = "desktop" | "mobile";
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
-            {cartLink}
-
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -586,6 +584,19 @@ type TriggerSource = "desktop" | "mobile";
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Categories
+            </Link>
+            <Link
+              href="/cart"
+              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <ShoppingCart className="h-4 w-4" aria-hidden />
+              Cart
+              {cartItemCount > 0 && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-bold text-white">
+                  {cartItemCount > 99 ? "99+" : cartItemCount}
+                </span>
+              )}
             </Link>
 
             {!user ? (

@@ -44,6 +44,7 @@ export function ProductForm({
     imageUploader,
     activeExistingImages,
     removeExistingImage,
+    moveExistingImage,
     handleChange,
     handleNameChange,
     handleDescriptionChange,
@@ -219,9 +220,11 @@ export function ProductForm({
       files={imageUploader.files}
       onAddFiles={imageUploader.addFiles}
       onRemoveFile={imageUploader.removeFile}
+      onMoveFile={imageUploader.moveFile}
       remaining={imageUploader.remaining}
       existingImages={activeExistingImages.map((key) => ({ key }))}
       onRemoveExisting={editingId ? removeExistingImage : undefined}
+      onMoveExisting={editingId ? moveExistingImage : undefined}
     />
   );
 
@@ -319,7 +322,7 @@ export function ProductForm({
             />
           </ProductFormSection>
 
-          <ProductFormSection title="Images" description="Upload images directly to Cloudflare R2.">
+          <ProductFormSection title="Images" description="Up to 8 images. First is primary — use arrows to set order.">
             {imageFields}
           </ProductFormSection>
         </form>
