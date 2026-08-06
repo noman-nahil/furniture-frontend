@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import {
-  absoluteImageUrl,
   absoluteUrl,
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE,
   SITE_NAME,
+  socialImageUrl,
 } from "@/lib/seo/site";
 
 export type BuildPageMetadataInput = {
@@ -26,6 +26,9 @@ export type BuildPageMetadataInput = {
  * Shared metadata builder for Open Graph + Twitter Card + canonical URLs.
  * Every public page should go through this so crawlers (Facebook, WhatsApp,
  * LinkedIn, X, Discord, Telegram, Slack, Teams, etc.) get consistent tags.
+ *
+ * Images go through socialImageUrl so WhatsApp/Messenger get JPEG instead of
+ * R2 WebP (which those clients often drop from the preview).
  */
 export function buildPageMetadata({
   title,
@@ -39,13 +42,14 @@ export function buildPageMetadata({
   noFollow = false,
 }: BuildPageMetadataInput): Metadata {
   const canonical = absoluteUrl(path);
-  const ogImageUrl = absoluteImageUrl(image);
+  const ogImageUrl = socialImageUrl(image);
   const ogImages = [
     {
       url: ogImageUrl,
       width: DEFAULT_OG_IMAGE.width,
       height: DEFAULT_OG_IMAGE.height,
       alt: imageAlt || title,
+      type: "image/jpeg",
     },
   ];
 

@@ -31,21 +31,37 @@ export const SITE_KEYWORDS = [
   APP_NAME,
 ] as const;
 
+function withHttps(hostOrUrl: string): string {
+  return hostOrUrl.startsWith("http") ? hostOrUrl : `https://${hostOrUrl}`;
+}
+
 /**
  * Resolves the canonical site origin.
  * Prefer NEXT_PUBLIC_SITE_URL in every deployed environment.
+ * Never prefer ephemeral Vercel deployment hostnames for production —
+ * WhatsApp / Facebook use og:url and a mismatched host breaks previews.
  */
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
   if (fromEnv) return fromEnv;
 
-  const vercel = process.env.VERCEL_URL?.trim().replace(/\/$/, "");
-  if (vercel) {
-    return vercel.startsWith("http") ? vercel : `https://${vercel}`;
+  const vercelEnv = process.env.VERCEL_ENV?.trim();
+  const vercelProd = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim().replace(
+    /\/$/,
+    "",
+  );
+  if (vercelEnv === "production" && vercelProd) {
+    return withHttps(vercelProd);
   }
 
-  if (process.env.NODE_ENV === "production") {
+  // Stable production fallback before ephemeral *.vercel.app deployment URLs
+  if (vercelEnv === "production" || process.env.NODE_ENV === "production") {
     return PRODUCTION_SITE_URL;
+  }
+
+  const vercel = process.env.VERCEL_URL?.trim().replace(/\/$/, "");
+  if (vercel) {
+    return withHttps(vercel);
   }
 
   return "http://localhost:3000";
@@ -74,4 +90,24 @@ export function absoluteImageUrl(
     return absoluteUrl(fallback);
   }
   return absoluteUrl(resolved.startsWith("/") ? resolved : `/${resolved}`);
+}
+
+/**
+ * Messenger-safe OG image URL (WhatsApp / Facebook / iMessage).
+ * Product gallery files are WebP on R2; those clients often omit the
+ * thumbnail entirely. Proxy through `/og/image` to serve a resized JPEG.
+ */
+export function socialImageUrl(
+  image?: string | null,
+  fallback: string = DEFAULT_OG_IMAGE_PATH,
+): string {
+  const raw = (image ?? "").trim();
+  const src = raw || fallback;
+
+  // Already pointing at our JPEG proxy — don't nest.
+  if (src.includes("/og/image")) {
+    return /^https?:\/\//i.test(src) ? src : absoluteUrl(src);
+  }
+
+  return absoluteUrl(`/og/image?src=${encodeURIComponent(src)}`);
 }

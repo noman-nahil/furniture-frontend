@@ -116,8 +116,8 @@ export async function generateMetadata({
       : `Shop ${displayName} — premium furniture and décor at ${APP_NAME}.`);
 
   // Prefer admin SEO ogImage, then the product's main gallery image.
-  // absoluteImageUrl (via buildPageMetadata) makes the URL absolute for
-  // Facebook / WhatsApp / LinkedIn / X / Discord / Telegram / Slack.
+  // socialImageUrl (via buildPageMetadata) serves a JPEG proxy so
+  // WhatsApp / Messenger / Facebook show the thumbnail (R2 WebP is dropped).
   const rawOgImage = seoBlock?.ogImage || product.images?.[0];
   const shouldNoIndex =
     Boolean(product.noIndex) ||
