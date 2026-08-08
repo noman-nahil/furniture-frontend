@@ -31,10 +31,12 @@ type ProductTableProps = {
   onToggleProduct: (id: string) => void;
   onToggleAllVisible: () => void;
   onEdit: (product: Product) => void;
+  onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
   onAddProduct?: () => void;
   onClearFilters?: () => void;
   canDelete: boolean;
+  canDuplicate: boolean;
   onPageChange: (page: number) => void;
 };
 
@@ -53,10 +55,12 @@ function ProductTableComponent({
   onToggleProduct,
   onToggleAllVisible,
   onEdit,
+  onDuplicate,
   onDelete,
   onAddProduct,
   onClearFilters,
   canDelete,
+  canDuplicate,
   onPageChange,
   subcategories,
 }: ProductTableProps) {
@@ -144,8 +148,10 @@ function ProductTableComponent({
                     p.subcategory ? subcategoryNameById(subcategories, p.subcategory) : undefined
                   }
                   canDelete={canDelete}
+                  canDuplicate={canDuplicate}
                   onToggle={() => onToggleProduct(p._id)}
                   onEdit={() => onEdit(p)}
+                  onDuplicate={() => onDuplicate(p._id)}
                   onDelete={() => onDelete(p._id)}
                 />
               ))}
@@ -184,8 +190,10 @@ function ProductTableComponent({
                       p.subcategory ? subcategoryNameById(subcategories, p.subcategory) : undefined
                     }
                     canDelete={canDelete}
+                    canDuplicate={canDuplicate}
                     onToggle={() => onToggleProduct(p._id)}
                     onEdit={() => onEdit(p)}
+                    onDuplicate={() => onDuplicate(p._id)}
                     onDelete={() => onDelete(p._id)}
                   />
                 ))}
@@ -235,8 +243,10 @@ type ProductRowProps = {
   categoryLabel: string;
   subcategoryLabel?: string;
   canDelete: boolean;
+  canDuplicate: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -248,8 +258,10 @@ function ProductMobileCard({
   categoryLabel,
   subcategoryLabel,
   canDelete,
+  canDuplicate,
   onToggle,
   onEdit,
+  onDuplicate,
   onDelete,
 }: ProductMobileCardProps) {
   const sk = (p.status === "inactive" || p.status === "draft" ? p.status : "active") as StatusKey;
@@ -295,7 +307,9 @@ function ProductMobileCard({
             productId={p._id}
             productName={name}
             canDelete={canDelete}
+            canDuplicate={canDuplicate}
             onEdit={onEdit}
+            onDuplicate={onDuplicate}
             onDelete={onDelete}
           />
         </div>
@@ -332,8 +346,10 @@ const ProductRow = memo(function ProductRow({
   categoryLabel,
   subcategoryLabel,
   canDelete,
+  canDuplicate,
   onToggle,
   onEdit,
+  onDuplicate,
   onDelete,
 }: ProductRowProps) {
   const sk = (p.status === "inactive" || p.status === "draft" ? p.status : "active") as StatusKey;
@@ -408,7 +424,9 @@ const ProductRow = memo(function ProductRow({
           productId={p._id}
           productName={name}
           canDelete={canDelete}
+          canDuplicate={canDuplicate}
           onEdit={onEdit}
+          onDuplicate={onDuplicate}
           onDelete={onDelete}
         />
       </td>

@@ -13,13 +13,15 @@ import {
   useInteractions,
   useRole,
 } from "@floating-ui/react";
-import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Copy, CopyPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 type ProductRowMenuProps = {
   productId: string;
   productName: string;
   canDelete: boolean;
+  canDuplicate: boolean;
   onEdit: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -27,7 +29,9 @@ export function ProductRowMenu({
   productId,
   productName,
   canDelete,
+  canDuplicate,
   onEdit,
+  onDuplicate,
   onDelete,
 }: ProductRowMenuProps) {
   const [open, setOpen] = useState(false);
@@ -85,6 +89,20 @@ export function ProductRowMenu({
         <Pencil className="h-3.5 w-3.5 text-slate-400" aria-hidden />
         Edit
       </button>
+      {canDuplicate && (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            setOpen(false);
+            onDuplicate();
+          }}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 focus:bg-slate-800 focus:outline-none"
+        >
+          <CopyPlus className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+          Duplicate
+        </button>
+      )}
       <button
         type="button"
         role="menuitem"

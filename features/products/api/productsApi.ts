@@ -70,6 +70,9 @@ export const productsApi = {
 
   delete: (id: string) => apiFetch<void>(`/products/${id}`, { method: "DELETE" }),
 
+  duplicate: (id: string) =>
+    apiFetch<Product>(`/products/${id}/duplicate`, { method: "POST" }),
+
   bulkUpdate: (payload: BulkUpdatePayload) =>
     apiFetch<{ updated: number }>("/products/bulk-update", {
       method: "PATCH",

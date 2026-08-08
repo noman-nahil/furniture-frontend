@@ -50,3 +50,18 @@ export function useDeleteProduct() {
     },
   });
 }
+
+export function useDuplicateProduct() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => productsApi.duplicate(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product duplicated successfully.");
+    },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to duplicate product.");
+    },
+  });
+}

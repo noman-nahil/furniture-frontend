@@ -6,13 +6,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ROLE_PERMISSIONS, DEFAULT_PAGE_SIZE } from "./constants";
 import { useProductsQuery, useCategoriesQuery, useSubcategoriesQuery } from "./hooks/useProducts";
 import { useProductForm } from "./hooks/useProductForm";
-import { useBulkUpdate, useBulkDelete, useDeleteProduct } from "./hooks/useBulkUpdate";
+import {
+  useBulkUpdate,
+  useBulkDelete,
+  useDeleteProduct,
+  useDuplicateProduct,
+} from "./hooks/useBulkUpdate";
 import { productsApi } from "./api/productsApi";
 import { ProductTable } from "./components/ProductTable";
 import { ProductFiltersToolbar } from "./components/ProductFiltersToolbar";
 import { ProductFormModal } from "./components/ProductFormModal";
 import { BulkActionBar } from "./components/BulkActionBar";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
+import { DuplicateProductDialog } from "./components/DuplicateProductDialog";
 import type { Product, ProductListResponse, ProductsManagementRole, StatusKey } from "./types";
 
 type ProductsManagementProps = {
@@ -49,6 +55,7 @@ export function ProductsManagement({
   const [selectedStatus, setSelectedStatus] = useState<StatusKey | "ALL" | "DISCOUNTED">("ALL");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDuplicateId, setConfirmDuplicateId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
   useEffect(() => setPage(1), [debouncedSearch]);
@@ -176,6 +183,7 @@ export function ProductsManagement({
 
   // ─── Mutations ────────────────────────────────────────────────────────
   const deleteProduct = useDeleteProduct();
+  const duplicateProduct = useDuplicateProduct();
   const bulkUpdate = useBulkUpdate();
   const bulkDelete = useBulkDelete();
 
@@ -208,6 +216,17 @@ export function ProductsManagement({
   }
 
   const pendingDeleteProduct = confirmDeleteId ? products.find((p) => p._id === confirmDeleteId) ?? null : null;
+  const pendingDuplicateProduct = confirmDuplicateId
+    ? products.find((p) => p._id === confirmDuplicateId) ?? null
+    : null;
+
+  function handleConfirmDuplicate(id: string) {
+    duplicateProduct.mutate(id, {
+      onSuccess: () => {
+        setConfirmDuplicateId(null);
+      },
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -262,10 +281,12 @@ export function ProductsManagement({
           onToggleProduct={toggleProduct}
           onToggleAllVisible={toggleAllVisible}
           onEdit={openEditForm}
+          onDuplicate={setConfirmDuplicateId}
           onDelete={setConfirmDeleteId}
           onAddProduct={openCreateForm}
           onClearFilters={handleClearFilters}
           canDelete={permissions.canDelete}
+          canDuplicate={permissions.canCreate}
           onPageChange={setPage}
         />
       </div>
@@ -296,6 +317,15 @@ export function ProductsManagement({
         onConfirm={(id) => {
           deleteProduct.mutate(id, { onSuccess: () => setConfirmDeleteId(null) });
         }}
+      />
+
+      <DuplicateProductDialog
+        product={pendingDuplicateProduct}
+        duplicating={duplicateProduct.isPending}
+        onCancel={() => {
+          if (!duplicateProduct.isPending) setConfirmDuplicateId(null);
+        }}
+        onConfirm={handleConfirmDuplicate}
       />
     </div>
   );
