@@ -95,7 +95,7 @@ const BRANCHES = [
 
 const BRAND_FACTS = [
   { icon: IconDiamond, label: "Votre marque de mobilier de confiance en France" },
-  { icon: IconBadgeCheck, label: "SIRET : 40252501800030" },
+  { icon: IconBadgeCheck, label: "SIRET : 97952113500025" },
   { icon: IconReceipt, label: "TVA : FR21979521135" },
 ] as const;
 
