@@ -42,6 +42,7 @@ export function useCategoryForm() {
         slug: c.slug,
         sortOrder: String(c.sortOrder ?? 0),
         isActive: c.isActive !== false,
+        showInNavbar: c.showInNavbar !== false,
       });
       setExistingImage(c.image);
       imageUploader.clear();
@@ -69,6 +70,7 @@ export function useCategoryForm() {
       fd.append("name", name);
       fd.append("slug", slug);
       fd.append("isActive", String(form.isActive));
+      fd.append("showInNavbar", String(form.showInNavbar));
       if (form.sortOrder.trim()) {
         fd.append("sortOrder", form.sortOrder.trim());
       }

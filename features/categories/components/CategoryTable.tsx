@@ -56,13 +56,14 @@ export function CategoryTable({
               <th className="px-4 py-2 font-medium">Image</th>
               <th className="px-4 py-2 font-medium">Slug</th>
               <th className="px-4 py-2 font-medium">Status</th>
+              <th className="px-4 py-2 font-medium">Navbar</th>
               <th className="px-4 py-2 text-right font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {categories.length === 0 && !loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                   No categories match.
                 </td>
               </tr>
@@ -113,6 +114,11 @@ export function CategoryTable({
                   <td className="px-4 py-2 align-middle">
                     <span className={c.isActive !== false ? "text-emerald-400" : "text-amber-400"}>
                       {c.isActive !== false ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 align-middle">
+                    <span className={c.showInNavbar !== false ? "text-emerald-400" : "text-slate-500"}>
+                      {c.showInNavbar !== false ? "Shown" : "Hidden"}
                     </span>
                   </td>
                   <td className="px-4 py-2 align-middle text-right">

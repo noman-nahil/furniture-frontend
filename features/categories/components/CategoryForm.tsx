@@ -108,6 +108,22 @@ export function CategoryForm({ formState }: CategoryFormProps) {
           Active (visible on storefront when using active lists)
         </label>
 
+        <label className="flex cursor-pointer items-start gap-2 text-xs text-slate-300">
+          <input
+            type="checkbox"
+            checked={form.showInNavbar}
+            onChange={(e) => handleChange("showInNavbar", e.target.checked)}
+            className="mt-0.5 rounded border-slate-600"
+          />
+          <span>
+            Show in navbar
+            <span className="mt-0.5 block text-[10px] text-slate-500">
+              Uncheck to hide from the top menu. Subcategories still appear under
+              &quot;Toutes les catégories&quot;.
+            </span>
+          </span>
+        </label>
+
         <div className="flex justify-end gap-2 pt-2">
           {editingId && (
             <button

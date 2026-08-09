@@ -13,10 +13,12 @@ export default async function Navbar() {
     getServerUser(),
   ]);
 
+  // Keep parents with showInNavbar === false off the menu; /categories still
+  // lists their subcategories via GET /subcategories/active.
   const categories: CategoryNav[] = isServerFetchError(res)
     ? []
     : Array.isArray(res)
-      ? res
+      ? res.filter((c) => c.showInNavbar !== false)
       : [];
 
   return (

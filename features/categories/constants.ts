@@ -7,6 +7,7 @@ export const EMPTY_FORM: CategoryFormValues = {
   slug: "",
   sortOrder: "",
   isActive: true,
+  showInNavbar: true,
 };
 
 /**

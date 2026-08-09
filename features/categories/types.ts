@@ -6,6 +6,8 @@ export type Category = {
   slug: string;
   sortOrder: number;
   isActive?: boolean;
+  /** When false, hidden from navbar but still on /categories via subcategories. */
+  showInNavbar?: boolean;
   image?: string;
   createdAt?: string;
 };
@@ -15,6 +17,7 @@ export type CategoryFormValues = {
   slug: string;
   sortOrder: string;
   isActive: boolean;
+  showInNavbar: boolean;
 };
 
 export type CategoryReorderItem = {
