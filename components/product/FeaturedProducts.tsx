@@ -11,12 +11,17 @@ function PaginationBar({
   currentPage,
   totalPages,
   onPage,
+  locale = "fr",
 }: {
   currentPage: number;
   totalPages: number;
   onPage: (p: number) => void;
+  locale?: "fr" | "en";
 }) {
   if (totalPages <= 1) return null;
+
+  const prevLabel = locale === "fr" ? "Préc." : "Prev";
+  const nextLabel = locale === "fr" ? "Suivant" : "Next";
 
   const visiblePages = (() => {
     if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -28,12 +33,12 @@ function PaginationBar({
   })();
 
   const btnBase =
-    "rounded-md sm:rounded-lg border border-gray-200 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40";
+    "rounded-md sm:rounded-lg border border-teal-700/30 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium text-teal-700 transition hover:bg-teal-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-teal-700";
 
   return (
     <div className="mt-6 sm:mt-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
       <button type="button" onClick={() => onPage(currentPage - 1)} disabled={currentPage <= 1} className={btnBase}>
-        Prev
+        {prevLabel}
       </button>
 
       {visiblePages.map((p, idx) => {
@@ -46,10 +51,10 @@ function PaginationBar({
               type="button"
               onClick={() => onPage(p)}
               aria-current={p === currentPage ? "page" : undefined}
-              className={`min-w-[2rem] sm:min-w-[2.25rem] rounded-md sm:rounded-lg border border-gray-200 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium tabular-nums transition hover:bg-gray-100 ${
+              className={`min-w-[2rem] sm:min-w-[2.25rem] rounded-md sm:rounded-lg border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium tabular-nums transition ${
                 p === currentPage
-                  ? "bg-gray-900 text-white hover:bg-gray-900 pointer-events-none"
-                  : "text-gray-700"
+                  ? "border-teal-700 bg-teal-700 text-white pointer-events-none"
+                  : "border-teal-700/30 text-teal-700 hover:bg-teal-700 hover:text-white"
               }`}
             >
               {p}
@@ -59,7 +64,7 @@ function PaginationBar({
       })}
 
       <button type="button" onClick={() => onPage(currentPage + 1)} disabled={currentPage >= totalPages} className={btnBase}>
-        Next
+        {nextLabel}
       </button>
     </div>
   );
@@ -168,7 +173,7 @@ export function FeaturedProducts({
         ))}
       </div>
 
-      <PaginationBar currentPage={currentPage} totalPages={totalPages} onPage={goPage} />
+      <PaginationBar currentPage={currentPage} totalPages={totalPages} onPage={goPage} locale={locale} />
     </section>
   );
 }

@@ -20,6 +20,7 @@ type PaginatedProductGridProps = {
   limit: number;
   search: string;
   emptyState: ReactNode;
+  locale?: "fr" | "en";
 };
 
 // ─────────────────────────────────────────────
@@ -31,11 +32,13 @@ function PaginationBar({
   totalPages,
   total,
   limit,
+  locale = "fr",
 }: {
   page: number;
   totalPages: number;
   total: number;
   limit: number;
+  locale?: "fr" | "en";
   // ✅ Removed `search` prop — it was accepted but never used inside
   //    PaginationBar. pageUrl() reads all params from useSearchParams()
   //    (including ?search=) so the search term is already preserved
@@ -45,6 +48,12 @@ function PaginationBar({
 
   const start = total === 0 ? 0 : (page - 1) * limit + 1;
   const end   = Math.min(page * limit, total);
+  const prevLabel = locale === "fr" ? "Préc." : "Prev";
+  const nextLabel = locale === "fr" ? "Suivant" : "Next";
+  const showingLabel =
+    locale === "fr"
+      ? `Affichage ${start}–${end} sur ${total} produits`
+      : `Showing ${start}–${end} of ${total} products`;
 
   // ✅ Wrapped in useCallback — pageUrl was a plain function defined inside
   //    the render body, recreated on every render. With useCallback it's
@@ -74,10 +83,15 @@ function PaginationBar({
 
   if (totalPages <= 1) return null;
 
+  const navBtn =
+    "rounded-lg border border-teal-700/30 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-700 hover:text-white transition-colors";
+  const navBtnDisabled =
+    "rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-300 cursor-not-allowed";
+
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-200">
       <span className="text-sm text-gray-600 tabular-nums">
-        Showing {start}–{end} of {total} products
+        {showingLabel}
       </span>
 
       <nav
@@ -88,20 +102,20 @@ function PaginationBar({
         {page > 1 ? (
           <Link
             href={pageUrl(page - 1)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className={navBtn}
             // ✅ Added rel="prev" — standard HTML hint that tells browsers
             //    and crawlers this link points to the previous page in a
             //    sequence. Helps search engines understand pagination structure.
             rel="prev"
           >
-            Prev
+            {prevLabel}
           </Link>
         ) : (
           <span
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-300 cursor-not-allowed"
+            className={navBtnDisabled}
             aria-disabled="true"
           >
-            Prev
+            {prevLabel}
           </span>
         )}
 
@@ -120,8 +134,8 @@ function PaginationBar({
                 aria-label={p === page ? `Page ${p}, current` : `Go to page ${p}`}
                 className={`min-w-[2.25rem] rounded-lg px-2 py-1.5 text-sm font-medium tabular-nums text-center transition-colors ${
                   p === page
-                    ? "bg-blue-600 text-white pointer-events-none"
-                    : "border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    ? "bg-teal-700 text-white pointer-events-none"
+                    : "border border-teal-700/30 text-teal-700 hover:bg-teal-700 hover:text-white"
                 }`}
               >
                 {p}
@@ -134,18 +148,18 @@ function PaginationBar({
         {page < totalPages ? (
           <Link
             href={pageUrl(page + 1)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className={navBtn}
             // ✅ Added rel="next" — same as rel="prev" above.
             rel="next"
           >
-            Next
+            {nextLabel}
           </Link>
         ) : (
           <span
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-300 cursor-not-allowed"
+            className={navBtnDisabled}
             aria-disabled="true"
           >
-            Next
+            {nextLabel}
           </span>
         )}
       </nav>
@@ -165,6 +179,7 @@ export function PaginatedProductGrid({
   limit,
   search,
   emptyState,
+  locale = "fr",
 }: PaginatedProductGridProps) {
   if (products.length === 0) {
     return <>{emptyState}</>;
@@ -183,6 +198,7 @@ export function PaginatedProductGrid({
         totalPages={totalPages}
         total={total}
         limit={limit}
+        locale={locale}
         // ✅ Removed: search is no longer passed to PaginationBar since
         //    it never used it — pageUrl() reads ?search= from useSearchParams().
       />
