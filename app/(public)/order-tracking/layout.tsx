@@ -8,6 +8,8 @@ export const metadata: Metadata = buildPageMetadata({
   title: "Track Order",
   description: `Track your order status and details with your order ID at ${APP_NAME}.`,
   path: "/order-tracking",
+  noIndex: true,
+  noFollow: true,
 });
 
 export default function OrderTrackingLayout({

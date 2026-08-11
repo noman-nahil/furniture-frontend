@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import {
+  fetchActiveHomepageSectionsForSitemap,
   fetchAllProductsForSitemap,
   getActiveCategories,
 } from "@/lib/seo/catalog";
@@ -30,17 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     },
-    {
-      url: `${siteUrl}/order-tracking`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.3,
-    },
   ];
 
-  const [categories, products] = await Promise.all([
+  const [categories, products, sections] = await Promise.all([
     getActiveCategories("fr"),
     fetchAllProductsForSitemap("fr"),
+    fetchActiveHomepageSectionsForSitemap(),
   ]);
 
   const categoryRoutes: MetadataRoute.Sitemap = [];
@@ -66,6 +62,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  const sectionRoutes: MetadataRoute.Sitemap = sections.map((section) => ({
+    url: `${siteUrl}/${section.slug}`,
+    lastModified: section.lastModified ?? now,
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
+
   const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
     url: `${siteUrl}/products/${product.slug}`,
     lastModified: product.lastModified ?? now,
@@ -73,5 +76,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  return [
+    ...staticRoutes,
+    ...categoryRoutes,
+    ...sectionRoutes,
+    ...productRoutes,
+  ];
 }

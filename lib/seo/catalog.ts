@@ -189,6 +189,70 @@ export const fetchHomepageSectionBySlug = cache(
   },
 );
 
+/**
+ * Top-level path segments that already map to real App Router routes.
+ * Section view-all URLs are `/{slug}`; colliding with these would duplicate
+ * or shadow a non-section page in the sitemap.
+ */
+const RESERVED_SECTION_SLUGS = new Set([
+  "products",
+  "categories",
+  "category",
+  "cart",
+  "checkout",
+  "order-tracking",
+  "login",
+  "register",
+  "admin",
+  "manager",
+  "dashboard",
+  "maintenance",
+  "api",
+  "account",
+  "og",
+]);
+
+type SitemapHomepageSection = {
+  slug?: string;
+  status?: string;
+  updatedAt?: string;
+  createdAt?: string;
+};
+
+/**
+ * Active homepage sections for sitemap generation (`/{slug}` view-all pages).
+ * Uses GET /homepage-sections (active-only) and skips invalid/reserved slugs.
+ */
+export async function fetchActiveHomepageSectionsForSitemap(): Promise<
+  Array<{ slug: string; lastModified?: Date }>
+> {
+  const res = await serverFetch<SitemapHomepageSection[]>(
+    "/homepage-sections",
+    { revalidate: 3600 },
+  );
+
+  if (isServerFetchError(res) || !Array.isArray(res)) return [];
+
+  const out: Array<{ slug: string; lastModified?: Date }> = [];
+
+  for (const section of res) {
+    if (section.status && section.status !== "active") continue;
+
+    const slug = String(section.slug ?? "")
+      .trim()
+      .toLowerCase();
+    if (!slug || RESERVED_SECTION_SLUGS.has(slug)) continue;
+
+    const rawDate = section.updatedAt || section.createdAt;
+    out.push({
+      slug,
+      lastModified: rawDate ? new Date(rawDate) : undefined,
+    });
+  }
+
+  return out;
+}
+
 type SitemapProduct = {
   slug: LocalizedField;
   updatedAt?: string;
