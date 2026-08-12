@@ -300,19 +300,15 @@ export default async function ProductDetailPage({
               )}
             </div>
 
-            <div className="flex items-center gap-2 -mt-2">
+            {/* <div className="flex items-center gap-2 -mt-2">
               <span
                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${oos ? "bg-[#A09080]" : "bg-[#2D6A4F]"}`}
                 aria-hidden
               />
-              <span className="text-xs text-[#6B6560]">
-                {oos
-                  ? "Currently unavailable"
-                  : stock <= 10
-                    ? `${stock} in stock — ships today`
-                    : "In stock — ready to ship"}
-              </span>
-            </div>
+               <span className="text-xs text-[#6B6560]">
+                {oos ? "Currently unavailable" : "In stock — ready to ship"}
+              </span> 
+            </div> */}
 
             {displayDescription && (
               <div className="pb-5 border-b border-[#E8E2D9]">
