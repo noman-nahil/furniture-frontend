@@ -94,7 +94,7 @@ function ImageUploaderComponent({
       {existingImages.length > 0 && (
         <div>
           <p className="mb-1.5 text-[11px] text-slate-400">
-            Current images · first is primary · use arrows to set order
+            Current images · first is primary
           </p>
           <div className="flex flex-wrap gap-2">
             {existingImages.map(({ key }, index) => (
@@ -139,7 +139,7 @@ function ImageUploaderComponent({
         onDragOver={(e) => e.preventDefault()}
         onClick={() => remaining > 0 && inputRef.current?.click()}
         className={[
-          "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors",
+          "flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-3 py-4 text-center transition-colors",
           remaining > 0
             ? "cursor-pointer border-slate-700 hover:border-slate-500 hover:bg-slate-900/60"
             : "cursor-not-allowed border-slate-800 opacity-50",
@@ -149,7 +149,7 @@ function ImageUploaderComponent({
         aria-label="Upload product images"
         onKeyDown={(e) => e.key === "Enter" && remaining > 0 && inputRef.current?.click()}
       >
-        <ImagePlus className="h-7 w-7 text-slate-500" aria-hidden />
+        <ImagePlus className="h-6 w-6 text-slate-500" aria-hidden />
         <div>
           <p className="text-xs font-medium text-slate-300">
             {remaining > 0
@@ -177,7 +177,7 @@ function ImageUploaderComponent({
       {files.length > 0 && (
         <div>
           <p className="mb-1.5 text-[11px] text-slate-400">
-            New uploads · appended after current images in this order
+            New uploads · appended after current images
           </p>
           <div className="flex flex-wrap gap-2">
             {files.map((f, i) => (

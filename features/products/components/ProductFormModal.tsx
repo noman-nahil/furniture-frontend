@@ -107,10 +107,10 @@ export function ProductFormModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-form-modal-title"
-        className="relative flex h-full w-full max-h-none flex-col border-slate-800 bg-slate-950 shadow-2xl sm:h-auto sm:max-h-[min(90vh,900px)] sm:max-w-[960px] sm:rounded-xl sm:border"
+        className="relative flex h-full w-full max-h-none flex-col border-slate-800 bg-slate-950 shadow-2xl sm:h-[min(92vh,980px)] sm:max-w-[1280px] sm:rounded-xl sm:border lg:max-w-[1360px]"
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
-          <h2 id="product-form-modal-title" className="text-base font-semibold text-slate-50 sm:text-lg">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 px-5 py-3">
+          <h2 id="product-form-modal-title" className="text-sm font-semibold text-slate-50 sm:text-base">
             {title}
           </h2>
           <button
@@ -124,7 +124,7 @@ export function ProductFormModal({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
           <ProductForm
             embedded
             formId={PRODUCT_FORM_ID}
@@ -134,7 +134,7 @@ export function ProductFormModal({
           />
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-800 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-800 px-5 py-3">
           <button
             type="button"
             onClick={onClose}

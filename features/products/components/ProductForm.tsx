@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { discountBadgeLabel, getFinalPrice } from "@/lib/productPrice";
 import { subcategoryParentKey } from "../utils/productFilters";
@@ -45,6 +45,7 @@ export function ProductForm({
     imageUploader,
     activeExistingImages,
     removeExistingImage,
+    clearAllImages,
     moveExistingImage,
     handleChange,
     handleNameChange,
@@ -91,7 +92,7 @@ export function ProductForm({
 
   const pricingFields = (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <div>
           <label htmlFor="product-price" className="mb-1 block text-xs font-medium text-slate-200">
             Price
@@ -125,7 +126,7 @@ export function ProductForm({
         </div>
         <div>
           <label htmlFor="product-discount-price" className="mb-1 block text-xs font-medium text-slate-200">
-            Discount price <span className="text-slate-500">(optional)</span>
+            Discount price
           </label>
           <input
             id="product-discount-price"
@@ -138,12 +139,81 @@ export function ProductForm({
             placeholder="Fixed price"
           />
         </div>
+        <div>
+          <label htmlFor="product-quantity" className="mb-1 block text-xs font-medium text-slate-200">
+            Quantity
+          </label>
+          <input
+            id="product-quantity"
+            type="number"
+            min="0"
+            step="1"
+            value={form.quantity}
+            onChange={(e) => handleChange("quantity", e.target.value)}
+            className={inputClass}
+            placeholder="0"
+          />
+        </div>
+        <div className="col-span-2 lg:col-span-1">
+          <label htmlFor="product-status" className="mb-1 block text-xs font-medium text-slate-200">
+            Status
+          </label>
+          <select
+            id="product-status"
+            value={form.status}
+            onChange={(e) => handleChange("status", e.target.value as typeof form.status)}
+            className={inputClass}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label htmlFor="product-category" className="mb-1 block text-xs font-medium text-slate-200">
+            Category
+          </label>
+          <select
+            id="product-category"
+            value={form.category}
+            onChange={(e) => {
+              handleChange("category", e.target.value);
+              handleChange("subcategory", "");
+            }}
+            className={inputClass}
+          >
+            <option value="">Select category</option>
+            {categories.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="product-subcategory" className="mb-1 block text-xs font-medium text-slate-200">
+            Subcategory
+          </label>
+          <select
+            id="product-subcategory"
+            value={form.subcategory}
+            onChange={(e) => handleChange("subcategory", e.target.value)}
+            className={inputClass}
+          >
+            <option value="">None</option>
+            {subsForCategory.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label htmlFor="discount-starts" className="mb-1 block text-xs font-medium text-slate-200">
-            Discount starts <span className="text-slate-500">(optional)</span>
+            Discount starts
           </label>
           <input
             id="discount-starts"
@@ -155,7 +225,7 @@ export function ProductForm({
         </div>
         <div>
           <label htmlFor="discount-ends" className="mb-1 block text-xs font-medium text-slate-200">
-            Discount ends <span className="text-slate-500">(optional)</span>
+            Discount ends
           </label>
           <input
             id="discount-ends"
@@ -167,56 +237,12 @@ export function ProductForm({
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-400">
+      <div className="rounded-md border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm text-slate-400">
         <span className="text-slate-500">Price preview: </span>
         <span className="font-semibold tabular-nums text-slate-100">{formatCurrency(previewFinal)}</span>
         {previewLabel && <span className="ml-2 text-rose-400">{previewLabel}</span>}
       </div>
     </>
-  );
-
-  const categoryFields = (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div>
-        <label htmlFor="product-category" className="mb-1 block text-xs font-medium text-slate-200">
-          Category
-        </label>
-        <select
-          id="product-category"
-          value={form.category}
-          onChange={(e) => {
-            handleChange("category", e.target.value);
-            handleChange("subcategory", "");
-          }}
-          className={inputClass}
-        >
-          <option value="">Select category</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="product-subcategory" className="mb-1 block text-xs font-medium text-slate-200">
-          Subcategory
-        </label>
-        <select
-          id="product-subcategory"
-          value={form.subcategory}
-          onChange={(e) => handleChange("subcategory", e.target.value)}
-          className={inputClass}
-        >
-          <option value="">None</option>
-          {subsForCategory.map((s) => (
-            <option key={s._id} value={s._id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
   );
 
   const canManageExistingImages = Boolean(editingId || duplicatingFromId);
@@ -233,6 +259,20 @@ export function ProductForm({
       onMoveExisting={canManageExistingImages ? moveExistingImage : undefined}
     />
   );
+
+  const hasImages = activeExistingImages.length + imageUploader.files.length > 0;
+
+  const clearImagesButton = hasImages ? (
+    <button
+      type="button"
+      onClick={clearAllImages}
+      className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-red-800 hover:bg-red-950/50 hover:text-red-300"
+      aria-label="Clear all images"
+    >
+      <Trash2 className="h-3 w-3" aria-hidden />
+      Clear all
+    </button>
+  ) : null;
 
   const standaloneActions = (
     <div className="flex items-center justify-end gap-2 pt-2">
@@ -258,83 +298,49 @@ export function ProductForm({
 
   if (embedded) {
     return (
-      <div>
+      <div className="space-y-3">
         {errorBanner}
 
-        <form id={formId} onSubmit={handleSubmit} className="space-y-5">
-          <ProductFormSection title="Basic Information" description="Names, URL slugs, and descriptions in French and English.">
-            <LocalizedNameFields
-              layout="grid"
-              name={form.name}
-              slug={form.slug}
-              description={form.description}
-              onNameChange={handleNameChange}
-              onSlugChange={handleSlugChange}
-              onSlugBlur={handleSlugBlur}
-              onSlugFromName={handleSlugFromName}
-              onDescriptionChange={handleDescriptionChange}
-            />
-          </ProductFormSection>
-
-          <ProductFormSection title="Pricing" description="Base price, discounts, and promotional windows.">
-            {pricingFields}
-          </ProductFormSection>
-
-          <ProductFormSection title="Inventory">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="product-quantity" className="mb-1 block text-xs font-medium text-slate-200">
-                  Quantity
-                </label>
-                <input
-                  id="product-quantity"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.quantity}
-                  onChange={(e) => handleChange("quantity", e.target.value)}
-                  className={inputClass}
-                  placeholder="0"
+        <form id={formId} onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="space-y-3">
+              <ProductFormSection title="Product">
+                <LocalizedNameFields
+                  layout="grid"
+                  name={form.name}
+                  slug={form.slug}
+                  description={form.description}
+                  onNameChange={handleNameChange}
+                  onSlugChange={handleSlugChange}
+                  onSlugBlur={handleSlugBlur}
+                  onSlugFromName={handleSlugFromName}
+                  onDescriptionChange={handleDescriptionChange}
                 />
-              </div>
-              <div>
-                <label htmlFor="product-status" className="mb-1 block text-xs font-medium text-slate-200">
-                  Status
-                </label>
-                <select
-                  id="product-status"
-                  value={form.status}
-                  onChange={(e) => handleChange("status", e.target.value as typeof form.status)}
-                  className={inputClass}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="draft">Draft</option>
-                </select>
-              </div>
+              </ProductFormSection>
+
+              <ProductFormSection title="Pricing & catalog">
+                {pricingFields}
+              </ProductFormSection>
             </div>
-          </ProductFormSection>
 
-          <ProductFormSection title="Categories">{categoryFields}</ProductFormSection>
+            <ProductFormSection
+              className="xl:sticky xl:top-0"
+              title="Images"
+              description="Up to 8. First is primary."
+              actions={clearImagesButton}
+            >
+              {imageFields}
+            </ProductFormSection>
+          </div>
 
-          <ProductFormSection
-            title="SEO & Metadata"
-            description="Search engine and social sharing settings per locale."
-          >
-            <SeoMetadataSection
-              variant="expanded"
-              seo={form.seo}
-              structuredData={form.structuredData}
-              noIndex={form.noIndex}
-              onSeoChange={handleSeoChange}
-              onStructuredDataChange={handleStructuredDataChange}
-              onNoIndexChange={(value) => handleChange("noIndex", value)}
-            />
-          </ProductFormSection>
-
-          <ProductFormSection title="Images" description="Up to 8 images. First is primary — use arrows to set order.">
-            {imageFields}
-          </ProductFormSection>
+          <SeoMetadataSection
+            seo={form.seo}
+            structuredData={form.structuredData}
+            noIndex={form.noIndex}
+            onSeoChange={handleSeoChange}
+            onStructuredDataChange={handleStructuredDataChange}
+            onNoIndexChange={(value) => handleChange("noIndex", value)}
+          />
         </form>
       </div>
     );
@@ -371,41 +377,6 @@ export function ProductForm({
 
         {pricingFields}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="product-quantity-standalone" className="mb-1 block text-xs font-medium text-slate-200">
-              Quantity
-            </label>
-            <input
-              id="product-quantity-standalone"
-              type="number"
-              min="0"
-              step="1"
-              value={form.quantity}
-              onChange={(e) => handleChange("quantity", e.target.value)}
-              className={inputClass}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label htmlFor="product-status-standalone" className="mb-1 block text-xs font-medium text-slate-200">
-              Status
-            </label>
-            <select
-              id="product-status-standalone"
-              value={form.status}
-              onChange={(e) => handleChange("status", e.target.value as typeof form.status)}
-              className={inputClass}
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        {categoryFields}
-
         <SeoMetadataSection
           seo={form.seo}
           structuredData={form.structuredData}
@@ -416,7 +387,10 @@ export function ProductForm({
         />
 
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-200">Images</label>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <label className="text-xs font-medium text-slate-200">Images</label>
+            {clearImagesButton}
+          </div>
           {imageFields}
         </div>
 

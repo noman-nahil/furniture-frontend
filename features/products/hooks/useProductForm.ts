@@ -306,6 +306,11 @@ export function useProductForm(onSaved?: (product: Product) => void) {
     setRemovedExistingKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
   }, []);
 
+  const clearAllImages = useCallback(() => {
+    setRemovedExistingKeys(existingImages);
+    resetImages();
+  }, [existingImages, resetImages]);
+
   const moveExistingImage = useCallback(
     (index: number, direction: -1 | 1) => {
       setExistingImages((prev) => {
@@ -389,6 +394,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       imageUploader,
       activeExistingImages,
       removeExistingImage,
+      clearAllImages,
       moveExistingImage,
       handleChange,
       handleNameChange,
@@ -413,6 +419,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       imageUploader,
       activeExistingImages,
       removeExistingImage,
+      clearAllImages,
       moveExistingImage,
       handleChange,
       handleNameChange,

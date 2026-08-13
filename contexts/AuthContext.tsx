@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!res.ok) return null;
 
-        const data = await res.json() as { accessToken?: string };
+        const data = await res.json() as { accessToken?: string | null };
         const newToken = data?.accessToken ?? null;
 
         if (newToken) {
