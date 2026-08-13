@@ -115,9 +115,51 @@ function seoFromProduct(seo?: { metaTitle?: string; metaDescription?: string; ke
   };
 }
 
+function refId(value: unknown): string {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null && "_id" in value) {
+    return String((value as { _id: string })._id);
+  }
+  return String(value);
+}
+
+function formValuesFromProduct(p: Product, { clearIdentity = false } = {}): ProductFormValues {
+  return {
+    name: { fr: p.name?.fr ?? "", en: p.name?.en ?? "" },
+    slug: { fr: p.slug?.fr ?? "", en: p.slug?.en ?? "" },
+    description: { fr: p.description?.fr ?? "", en: p.description?.en ?? "" },
+    price: String(p.price ?? ""),
+    quantity: String(p.quantity ?? ""),
+    category: refId(p.category),
+    subcategory: refId(p.subcategory),
+    discount: String(p.discount ?? ""),
+    discountPrice: p.discountPrice != null ? String(p.discountPrice) : "",
+    status: p.status ?? "active",
+    discountStartsAt: p.discountStartsAt
+      ? new Date(p.discountStartsAt).toISOString().slice(0, 16)
+      : "",
+    discountEndsAt: p.discountEndsAt
+      ? new Date(p.discountEndsAt).toISOString().slice(0, 16)
+      : "",
+    seo: {
+      fr: seoFromProduct(p.seo?.fr),
+      en: seoFromProduct(p.seo?.en),
+    },
+    structuredData: {
+      gtin: clearIdentity ? "" : (p.structuredData?.gtin ?? ""),
+      mpn: clearIdentity ? "" : (p.structuredData?.mpn ?? ""),
+      brand: p.structuredData?.brand ?? "",
+      condition: p.structuredData?.condition ?? "NewCondition",
+    },
+    noIndex: p.noIndex ?? false,
+  };
+}
+
 export function useProductForm(onSaved?: (product: Product) => void) {
   const qc = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [duplicatingFromId, setDuplicatingFromId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductFormValues>({ ...EMPTY_FORM });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -212,6 +254,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
 
   const resetForm = useCallback(() => {
     setEditingId(null);
+    setDuplicatingFromId(null);
     setForm({ ...EMPTY_FORM });
     setError(null);
     setExistingImages([]);
@@ -224,41 +267,32 @@ export function useProductForm(onSaved?: (product: Product) => void) {
   const startEdit = useCallback(
     (p: Product) => {
       setEditingId(p._id);
+      setDuplicatingFromId(null);
       setError(null);
-      setForm({
-        name: { fr: p.name?.fr ?? "", en: p.name?.en ?? "" },
-        slug: { fr: p.slug?.fr ?? "", en: p.slug?.en ?? "" },
-        description: { fr: p.description?.fr ?? "", en: p.description?.en ?? "" },
-        price: String(p.price ?? ""),
-        quantity: String(p.quantity ?? ""),
-        category: p.category ?? "",
-        subcategory: p.subcategory ?? "",
-        discount: String(p.discount ?? ""),
-        discountPrice: p.discountPrice != null ? String(p.discountPrice) : "",
-        status: p.status ?? "active",
-        discountStartsAt: p.discountStartsAt
-          ? new Date(p.discountStartsAt).toISOString().slice(0, 16)
-          : "",
-        discountEndsAt: p.discountEndsAt
-          ? new Date(p.discountEndsAt).toISOString().slice(0, 16)
-          : "",
-        seo: {
-          fr: seoFromProduct(p.seo?.fr),
-          en: seoFromProduct(p.seo?.en),
-        },
-        structuredData: {
-          gtin: p.structuredData?.gtin ?? "",
-          mpn: p.structuredData?.mpn ?? "",
-          brand: p.structuredData?.brand ?? "",
-          condition: p.structuredData?.condition ?? "NewCondition",
-        },
-        noIndex: p.noIndex ?? false,
-      });
+      setForm(formValuesFromProduct(p));
       const images = p.images ?? [];
       setExistingImages(images);
       setOriginalImageOrder(images);
       setRemovedExistingKeys([]);
-      // Follow the name while typing unless this locale already has a custom slug.
+      slugLockedRef.current = {
+        fr: isCustomSlug(p.slug?.fr, p.name?.fr),
+        en: isCustomSlug(p.slug?.en, p.name?.en),
+      };
+      resetImages();
+    },
+    [resetImages],
+  );
+
+  const startDuplicate = useCallback(
+    (p: Product) => {
+      setEditingId(null);
+      setDuplicatingFromId(p._id);
+      setError(null);
+      setForm(formValuesFromProduct(p, { clearIdentity: true }));
+      const images = p.images ?? [];
+      setExistingImages(images);
+      setOriginalImageOrder(images);
+      setRemovedExistingKeys([]);
       slugLockedRef.current = {
         fr: isCustomSlug(p.slug?.fr, p.name?.fr),
         en: isCustomSlug(p.slug?.en, p.name?.en),
@@ -303,7 +337,14 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       }
 
       const fd = new FormData();
-      fd.append("payload", JSON.stringify(buildPayloadObject(form)));
+      const payload = buildPayloadObject(form);
+      if (duplicatingFromId) {
+        Object.assign(payload, {
+          sourceProductId: duplicatingFromId,
+          reuseImages: activeExistingImages,
+        });
+      }
+      fd.append("payload", JSON.stringify(payload));
       imageUploader.files.forEach((f) => fd.append("images", f.file));
 
       try {
@@ -319,9 +360,12 @@ export function useProductForm(onSaved?: (product: Product) => void) {
           onSaved?.(updated);
           resetForm();
         } else {
+          if (duplicatingFromId) {
+            activeExistingImages.forEach((key) => fd.append("imageOrder", key));
+          }
           const created = await productsApi.create(fd);
           qc.invalidateQueries({ queryKey: ["products"] });
-          toast.success("Product created.");
+          toast.success(duplicatingFromId ? "Product duplicated successfully." : "Product created.");
           onSaved?.(created);
           resetForm();
         }
@@ -331,13 +375,14 @@ export function useProductForm(onSaved?: (product: Product) => void) {
         setSaving(false);
       }
     },
-    [editingId, form, imageUploader, onSaved, qc, resetForm, removedExistingKeys, activeExistingImages]
+    [editingId, duplicatingFromId, form, imageUploader, onSaved, qc, resetForm, removedExistingKeys, activeExistingImages]
   );
 
   return useMemo(
     () => ({
       form,
       editingId,
+      duplicatingFromId,
       error,
       saving,
       isDirty,
@@ -356,10 +401,12 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       handleSubmit,
       resetForm,
       startEdit,
+      startDuplicate,
     }),
     [
       form,
       editingId,
+      duplicatingFromId,
       error,
       saving,
       isDirty,
@@ -378,6 +425,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       handleSubmit,
       resetForm,
       startEdit,
+      startDuplicate,
     ],
   );
 }

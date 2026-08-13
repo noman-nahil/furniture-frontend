@@ -39,6 +39,7 @@ export function ProductForm({
   const {
     form,
     editingId,
+    duplicatingFromId,
     error,
     saving,
     imageUploader,
@@ -218,6 +219,8 @@ export function ProductForm({
     </div>
   );
 
+  const canManageExistingImages = Boolean(editingId || duplicatingFromId);
+
   const imageFields = (
     <ImageUploader
       files={imageUploader.files}
@@ -226,8 +229,8 @@ export function ProductForm({
       onMoveFile={imageUploader.moveFile}
       remaining={imageUploader.remaining}
       existingImages={activeExistingImages.map((key) => ({ key }))}
-      onRemoveExisting={editingId ? removeExistingImage : undefined}
-      onMoveExisting={editingId ? moveExistingImage : undefined}
+      onRemoveExisting={canManageExistingImages ? removeExistingImage : undefined}
+      onMoveExisting={canManageExistingImages ? moveExistingImage : undefined}
     />
   );
 
@@ -248,7 +251,7 @@ export function ProductForm({
         className="flex items-center gap-2 rounded-lg bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-white disabled:opacity-70"
       >
         {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
-        {saving ? (editingId ? "Saving…" : "Creating…") : editingId ? "Save changes" : "Create product"}
+        {saving ? (editingId ? "Saving…" : "Creating…") : editingId ? "Save changes" : duplicatingFromId ? "Create copy" : "Create product"}
       </button>
     </div>
   );
@@ -340,9 +343,15 @@ export function ProductForm({
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-4">
       <div className="mb-3">
-        <p className="text-xs font-medium text-slate-200">{editingId ? "Edit product" : "Create product"}</p>
+        <p className="text-xs font-medium text-slate-200">
+          {editingId ? "Edit product" : duplicatingFromId ? "Duplicate product" : "Create product"}
+        </p>
         <p className="text-[11px] text-slate-500">
-          {editingId ? "Update fields and save." : "Upload images directly to Cloudflare R2."}
+          {editingId
+            ? "Update fields and save."
+            : duplicatingFromId
+              ? "Change the name, slug, or any other fields, then create the copy."
+              : "Upload images directly to Cloudflare R2."}
         </p>
       </div>
 

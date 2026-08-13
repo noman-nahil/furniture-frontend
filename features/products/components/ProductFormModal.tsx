@@ -25,9 +25,22 @@ export function ProductFormModal({
 }: ProductFormModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
-  const { editingId, saving } = formState;
+  const { editingId, duplicatingFromId, saving } = formState;
 
-  const title = editingId ? "Edit Product" : "Create Product";
+  const title = editingId
+    ? "Edit Product"
+    : duplicatingFromId
+      ? "Duplicate Product"
+      : "Create Product";
+  const submitLabel = saving
+    ? editingId
+      ? "Saving…"
+      : "Creating…"
+    : editingId
+      ? "Save Product"
+      : duplicatingFromId
+        ? "Create Copy"
+        : "Save Product";
 
   // Focus the close button only when the modal opens — not on every
   // parent re-render. Depending on `onClose` here used to re-run this
@@ -136,7 +149,7 @@ export function ProductFormModal({
             className="flex items-center gap-2 rounded-lg bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-white disabled:opacity-70"
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-            {saving ? "Saving…" : "Save Product"}
+            {submitLabel}
           </button>
         </div>
       </div>
