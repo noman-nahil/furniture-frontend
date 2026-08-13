@@ -77,6 +77,7 @@ export function DuplicateProductDialog({
         </p>
         <p className="mt-2 text-xs text-slate-400">
           This will create a new active product using the existing product information and images.
+          You can change the name and slug after duplicating.
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button

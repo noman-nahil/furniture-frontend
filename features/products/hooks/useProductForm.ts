@@ -1,13 +1,20 @@
 // features/products/hooks/useProductForm.ts
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { slugify } from "@/lib/slug";
 import { productsApi } from "../api/productsApi";
 import { EMPTY_FORM } from "../constants";
 import { useImageUploader } from "./useImageUploader";
 import type { Product, ProductFormValues } from "../types";
+
+function isCustomSlug(slug?: string, name?: string): boolean {
+  const current = slugify(slug ?? "");
+  if (!current) return false;
+  return current !== slugify(name ?? "");
+}
 
 function validate(form: ProductFormValues): string | null {
   const priceNum = Number(form.price);
@@ -63,6 +70,10 @@ function buildPayloadObject(form: ProductFormValues) {
   const name: Record<string, string> = { fr: form.name.fr.trim() };
   if (form.name.en.trim()) name.en = form.name.en.trim();
 
+  const slug: Record<string, string> = {};
+  if (form.slug.fr.trim()) slug.fr = form.slug.fr.trim();
+  if (form.slug.en.trim()) slug.en = form.slug.en.trim();
+
   const description: Record<string, string> = {};
   if (form.description.fr.trim()) description.fr = form.description.fr.trim();
   if (form.description.en.trim()) description.en = form.description.en.trim();
@@ -74,6 +85,7 @@ function buildPayloadObject(form: ProductFormValues) {
 
   return {
     name,
+    ...(Object.keys(slug).length > 0 ? { slug } : {}),
     description,
     price: priceNum,
     quantity: form.quantity === "" ? 0 : Number(form.quantity),
@@ -114,6 +126,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
   const [originalImageOrder, setOriginalImageOrder] = useState<string[]>([]);
   const [removedExistingKeys, setRemovedExistingKeys] = useState<string[]>([]);
   const activeExistingImages = existingImages.filter((k) => !removedExistingKeys.includes(k));
+  const slugLockedRef = useRef<{ fr: boolean; en: boolean }>({ fr: false, en: false });
 
   const imageUploader = useImageUploader(activeExistingImages.length);
 
@@ -136,7 +149,39 @@ export function useProductForm(onSaved?: (product: Product) => void) {
   );
 
   const handleNameChange = useCallback((locale: "fr" | "en", value: string) => {
-    setForm((prev) => ({ ...prev, name: { ...prev.name, [locale]: value } }));
+    setForm((prev) => {
+      const next = { ...prev, name: { ...prev.name, [locale]: value } };
+      if (!slugLockedRef.current[locale]) {
+        next.slug = { ...prev.slug, [locale]: slugify(value) };
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSlugChange = useCallback((locale: "fr" | "en", value: string) => {
+    setForm((prev) => {
+      const fromName = slugify(prev.name[locale]);
+      slugLockedRef.current[locale] =
+        value.trim() !== "" && slugify(value) !== fromName;
+      return { ...prev, slug: { ...prev.slug, [locale]: value } };
+    });
+  }, []);
+
+  const handleSlugBlur = useCallback((locale: "fr" | "en") => {
+    setForm((prev) => {
+      const nextSlug = slugify(prev.slug[locale]);
+      const fromName = slugify(prev.name[locale]);
+      slugLockedRef.current[locale] = nextSlug !== "" && nextSlug !== fromName;
+      return { ...prev, slug: { ...prev.slug, [locale]: nextSlug } };
+    });
+  }, []);
+
+  const handleSlugFromName = useCallback((locale: "fr" | "en") => {
+    slugLockedRef.current[locale] = false;
+    setForm((prev) => ({
+      ...prev,
+      slug: { ...prev.slug, [locale]: slugify(prev.name[locale]) },
+    }));
   }, []);
 
   const handleDescriptionChange = useCallback((locale: "fr" | "en", value: string) => {
@@ -172,6 +217,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
     setExistingImages([]);
     setOriginalImageOrder([]);
     setRemovedExistingKeys([]);
+    slugLockedRef.current = { fr: false, en: false };
     resetImages();
   }, [resetImages]);
 
@@ -181,6 +227,7 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       setError(null);
       setForm({
         name: { fr: p.name?.fr ?? "", en: p.name?.en ?? "" },
+        slug: { fr: p.slug?.fr ?? "", en: p.slug?.en ?? "" },
         description: { fr: p.description?.fr ?? "", en: p.description?.en ?? "" },
         price: String(p.price ?? ""),
         quantity: String(p.quantity ?? ""),
@@ -211,6 +258,11 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       setExistingImages(images);
       setOriginalImageOrder(images);
       setRemovedExistingKeys([]);
+      // Follow the name while typing unless this locale already has a custom slug.
+      slugLockedRef.current = {
+        fr: isCustomSlug(p.slug?.fr, p.name?.fr),
+        en: isCustomSlug(p.slug?.en, p.name?.en),
+      };
       resetImages();
     },
     [resetImages],
@@ -295,6 +347,9 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       moveExistingImage,
       handleChange,
       handleNameChange,
+      handleSlugChange,
+      handleSlugBlur,
+      handleSlugFromName,
       handleDescriptionChange,
       handleSeoChange,
       handleStructuredDataChange,
@@ -314,6 +369,9 @@ export function useProductForm(onSaved?: (product: Product) => void) {
       moveExistingImage,
       handleChange,
       handleNameChange,
+      handleSlugChange,
+      handleSlugBlur,
+      handleSlugFromName,
       handleDescriptionChange,
       handleSeoChange,
       handleStructuredDataChange,

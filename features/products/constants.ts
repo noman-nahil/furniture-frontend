@@ -39,6 +39,7 @@ const EMPTY_SEO_LOCALE = {
 
 export const EMPTY_FORM = {
   name: { fr: "", en: "" },
+  slug: { fr: "", en: "" },
   description: { fr: "", en: "" },
   price: "",
   quantity: "",

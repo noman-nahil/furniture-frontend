@@ -25,7 +25,7 @@ export type StructuredData = {
 export type Product = {
   _id: string;
   name: LocalizedText;
-  slug?: { fr?: string; en?: string }; // server-generated, never edited directly
+  slug?: { fr?: string; en?: string };
   description?: LocalizedText;
   price: number;
   quantity: number;
@@ -84,6 +84,7 @@ export type SeoFormValues = {
 
 export type ProductFormValues = {
   name: { fr: string; en: string };
+  slug: { fr: string; en: string };
   description: { fr: string; en: string };
   price: string;
   quantity: string;

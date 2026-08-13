@@ -47,6 +47,9 @@ export function ProductForm({
     moveExistingImage,
     handleChange,
     handleNameChange,
+    handleSlugChange,
+    handleSlugBlur,
+    handleSlugFromName,
     handleDescriptionChange,
     handleSeoChange,
     handleStructuredDataChange,
@@ -256,12 +259,16 @@ export function ProductForm({
         {errorBanner}
 
         <form id={formId} onSubmit={handleSubmit} className="space-y-5">
-          <ProductFormSection title="Basic Information" description="Names and descriptions in French and English.">
+          <ProductFormSection title="Basic Information" description="Names, URL slugs, and descriptions in French and English.">
             <LocalizedNameFields
               layout="grid"
               name={form.name}
+              slug={form.slug}
               description={form.description}
               onNameChange={handleNameChange}
+              onSlugChange={handleSlugChange}
+              onSlugBlur={handleSlugBlur}
+              onSlugFromName={handleSlugFromName}
               onDescriptionChange={handleDescriptionChange}
             />
           </ProductFormSection>
@@ -344,8 +351,12 @@ export function ProductForm({
       <form onSubmit={handleSubmit} className="space-y-3">
         <LocalizedNameFields
           name={form.name}
+          slug={form.slug}
           description={form.description}
           onNameChange={handleNameChange}
+          onSlugChange={handleSlugChange}
+          onSlugBlur={handleSlugBlur}
+          onSlugFromName={handleSlugFromName}
           onDescriptionChange={handleDescriptionChange}
         />
 
