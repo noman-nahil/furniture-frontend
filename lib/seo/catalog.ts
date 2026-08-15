@@ -177,6 +177,7 @@ export const fetchHomepageSectionBySlug = cache(
     // Crawlers still ask for WordPress leftovers like /sitemap_index.xml.
     // Those hit `/{sectionSlug}` and must not call the homepage-section API.
     if (/\.[a-z0-9]{2,5}$/i.test(normalized)) return null;
+    if (RESERVED_SECTION_SLUGS.has(normalized)) return null;
 
     const res = await serverFetch<PublicHomepageSection>(
       `/homepage-sections/slug/${encodeURIComponent(normalized)}`,
@@ -199,6 +200,7 @@ export const fetchHomepageSectionBySlug = cache(
  */
 const RESERVED_SECTION_SLUGS = new Set([
   "products",
+  "shop",
   "categories",
   "category",
   "cart",

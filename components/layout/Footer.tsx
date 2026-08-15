@@ -101,7 +101,7 @@ const BRAND_FACTS = [
 
 const INFO_LINKS = [
   { name: "Maison", href: "/" },
-  { name: "Boutique", href: "/shop" },
+  { name: "Boutique", href: "/products" },
   { name: "À propos de nous", href: "/about" },
   { name: "Contactez-nous", href: "/contact" },
   { name: "Politique de confidentialité", href: "/privacy-policy" },

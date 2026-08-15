@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
         destination: "/sitemap.xml",
         permanent: true,
       },
+      {
+        source: "/shop",
+        destination: "/products",
+        permanent: true,
+      },
+      {
+        source: "/shop/:path*",
+        destination: "/products",
+        permanent: true,
+      },
     ];
   },
   images: {

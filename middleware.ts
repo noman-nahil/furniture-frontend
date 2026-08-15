@@ -101,8 +101,25 @@ async function readSession(req: NextRequest): Promise<SessionResult> {
 // Middleware
 // ─────────────────────────────────────────────
 
+/**
+ * WordPress leftovers. next.config redirects never run for these because
+ * middleware matches the path first and returns next() — then `/{sectionSlug}`
+ * 404s. Handle them here, before the maintenance gate.
+ */
+function applyLegacyRedirect(req: NextRequest): NextResponse | null {
+  const { pathname } = req.nextUrl;
+  if (pathname !== "/shop" && !pathname.startsWith("/shop/")) return null;
+
+  const url = req.nextUrl.clone();
+  url.pathname = "/products";
+  return NextResponse.redirect(url, 308);
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  const legacy = applyLegacyRedirect(req);
+  if (legacy) return legacy;
 
   // Public storefront. Maintenance mode is the only reason middleware runs
   // here, and while it is off the request is handed straight back to Next
