@@ -204,7 +204,7 @@ export default function HeroCarousel({ banners }: { banners: readonly HeroBanner
               src={getImageUrl(banner.image)}
               alt=""
               fill
-              sizes="100vw"
+              sizes="(max-width: 639px) 100vw, 1px"
               className="object-cover blur-md scale-110 sm:hidden"
               aria-hidden
               priority={i === FIRST_REAL_INDEX}

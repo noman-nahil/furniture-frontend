@@ -110,13 +110,13 @@ const INFO_LINKS = [
 ] as const;
 
 const CATEGORY_LINKS = [
-  { name: "Canapés", href: "/product-category/sofas" },
-  { name: "Les Chambres", href: "/product-category/bedrooms" },
-  { name: "Lits", href: "/product-category/beds" },
-  { name: "Table", href: "/product-category/tables" },
-  { name: "Chambre Meubles", href: "/product-category/bedrooms/bedroom-furniture-sets" },
-  { name: "Lits Coffre", href: "/product-category/beds/storage-bed" },
-  { name: "Table Manger", href: "/product-category/tables/dining-table" },
+  { name: "Canapés", href: "/category/canape" },
+  { name: "Les Chambres", href: "/category/les-chambres" },
+  { name: "Lits", href: "/category/lits" },
+  { name: "Table", href: "/category/table" },
+  { name: "Chambre Meubles", href: "/category/les-chambres/chambres-adulte" },
+  { name: "Lits Coffre", href: "/category/lits/lits-coffre" },
+  { name: "Table Manger", href: "/category/table/table-manger" },
 ] as const;
 
 const SOCIAL_LINKS = [
@@ -279,7 +279,7 @@ export default function Footer() {
           <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div className="relative w-6 h-6 shrink-0">
-                <Image src={LOGO_PATH} alt={APP_NAME} fill className="object-contain" />
+                <Image src={LOGO_PATH} alt={APP_NAME} fill sizes="24px" className="object-contain" />
               </div>
               <p className="text-xs text-[#A09080]">
                 Copyright © {currentYear} {APP_NAME}. Tous droits réservés.

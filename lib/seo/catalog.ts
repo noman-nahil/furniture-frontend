@@ -174,6 +174,9 @@ export const fetchHomepageSectionBySlug = cache(
   async (slug: string): Promise<PublicHomepageSection | null> => {
     const normalized = slug.trim().toLowerCase();
     if (!normalized) return null;
+    // Crawlers still ask for WordPress leftovers like /sitemap_index.xml.
+    // Those hit `/{sectionSlug}` and must not call the homepage-section API.
+    if (/\.[a-z0-9]{2,5}$/i.test(normalized)) return null;
 
     const res = await serverFetch<PublicHomepageSection>(
       `/homepage-sections/slug/${encodeURIComponent(normalized)}`,

@@ -309,6 +309,7 @@ type TriggerSource = "desktop" | "mobile";
           src={LOGO_PATH}
           alt={APP_NAME}
           fill
+          sizes="(min-width: 1024px) 96px, (min-width: 768px) 80px, 64px"
           className="object-contain"
           priority
         />

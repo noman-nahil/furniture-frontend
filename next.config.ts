@@ -17,6 +17,15 @@ if (!r2Hostname && process.env.NODE_ENV !== "production") {
 }
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/sitemap_index.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       ...(r2Hostname
