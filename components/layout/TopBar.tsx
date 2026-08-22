@@ -10,9 +10,9 @@ const TAGLINE_FR =
   "Ouvert tous les jours, 9h30 – 20h, y compris les jours fériés.";
 
 const SOCIAL_LINKS = {
-  facebook: "#",
-  instagram: "#",
-  tiktok: "#",
+  facebook: "https://www.facebook.com/meublesdeparisofficial",
+  instagram: "https://www.instagram.com/meubles_de_paris/",
+  tiktok: "https://www.tiktok.com/@meublesdeparis",
 };
 
 /** Existing teal-700, then the requested palette — one step per second. */

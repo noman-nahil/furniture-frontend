@@ -26,7 +26,11 @@ export function organizationJsonLd() {
     url: absoluteUrl("/"),
     logo: absoluteUrl(LOGO_PATH),
     description: DEFAULT_DESCRIPTION,
-    sameAs: [] as string[],
+    sameAs: [
+      "https://www.facebook.com/meublesdeparisofficial",
+      "https://www.instagram.com/meubles_de_paris/",
+      "https://www.tiktok.com/@meublesdeparis",
+    ],
   };
 }
 
