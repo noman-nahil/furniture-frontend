@@ -10,11 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Minimize2 } from "lucide-react";
-import { getImageUrl } from "@/lib/image";
-
-function isRemoteImage(src: string): boolean {
-  return /^https?:\/\//i.test(src);
-}
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 
 const ZOOM_STEP = 0.4;
 const ZOOM_MIN  = 1;

@@ -1,7 +1,7 @@
 // features/catalog/components/CategoryCard.tsx
 import Link from "next/link";
 import Image from "next/image";
-import { getImageUrl } from "@/lib/image";
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 import { shimmerBlurDataUrl } from "../utils/shimmer";
 
 type CategoryCardProps = {
@@ -31,6 +31,7 @@ export function CategoryCard({ name, href, image, index = 0 }: CategoryCardProps
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 50vw, 33vw"
             placeholder="blur"
             blurDataURL={shimmerBlurDataUrl()}
+            unoptimized={isRemoteImage(imageSrc)}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           />
         ) : null}

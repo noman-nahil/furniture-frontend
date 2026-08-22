@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useRef } from "react";
 import Image from "next/image";
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 import { ArrowRight, Folder, Layers } from "lucide-react";
 import { MatchHighlight } from "./MatchHighlight";
 import { SearchEmpty } from "./SearchEmpty";
@@ -20,10 +21,6 @@ type SearchSuggestionsProps = {
   onSelect: (suggestion: SearchSuggestion) => void;
   onRetry: () => void;
 };
-
-function isRemoteImage(src: string): boolean {
-  return /^https?:\/\//i.test(src);
-}
 
 function SuggestionIcon({ kind }: { kind: SearchSuggestion["kind"] }) {
   if (kind === "category") {
@@ -126,12 +123,12 @@ function SearchSuggestionsComponent({
                 <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-[#FAFAF8]">
                   {item.image ? (
                     <Image
-                      src={item.image}
+                      src={getImageUrl(item.image)}
                       alt=""
                       fill
                       sizes="44px"
                       className="object-contain p-1"
-                      unoptimized={isRemoteImage(item.image)}
+                      unoptimized={isRemoteImage(getImageUrl(item.image))}
                     />
                   ) : null}
                 </span>
@@ -140,12 +137,12 @@ function SearchSuggestionsComponent({
                   {item.image ? (
                     <span className="relative h-full w-full overflow-hidden rounded-lg">
                       <Image
-                        src={item.image}
+                        src={getImageUrl(item.image)}
                         alt=""
                         fill
                         sizes="44px"
                         className="object-cover"
-                        unoptimized={isRemoteImage(item.image)}
+                        unoptimized={isRemoteImage(getImageUrl(item.image))}
                       />
                     </span>
                   ) : (

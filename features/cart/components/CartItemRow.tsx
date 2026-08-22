@@ -5,7 +5,7 @@ import { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatBDT } from "@/lib/productPrice";
-import { getImageUrl } from "@/lib/image";
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 import type { ValidatedCartItem } from "../types";
 import type { LocalizedField } from "@/types/product";
 
@@ -33,6 +33,7 @@ function CartItemRowComponent({ item, disabled, onQuantityChange, onRemove }: Ca
   const slugValue = pickLocale(item.slug as unknown as LocalizedField | string);
   const displayName = pickLocale(item.name as unknown as LocalizedField | string);
 
+  const imageSrc = item.image ? getImageUrl(item.image) : "/placeholder-product.png";
   const href = slugValue ? `/products/${slugValue}` : "/products";
 
   return (
@@ -43,12 +44,13 @@ function CartItemRowComponent({ item, disabled, onQuantityChange, onRemove }: Ca
           className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gray-100 overflow-hidden ring-1 ring-gray-200/80"
         >
           <Image
-            src={item.image ? getImageUrl(item.image) : "/placeholder-product.png"}
+            src={imageSrc}
             alt={displayName}
             fill
             sizes="96px"
             quality={90}
             className="object-cover"
+            unoptimized={isRemoteImage(imageSrc)}
           />
         </Link>
 

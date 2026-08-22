@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import { getImageUrl } from "@/lib/image";
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 
 /** Shape the backend's active-banner endpoint returns for each slide. */
 export type HeroBanner = {
@@ -191,7 +191,11 @@ export default function HeroCarousel({ banners }: { banners: readonly HeroBanner
         }}
         onTransitionEnd={handleTransitionEnd}
       >
-        {slides.map((banner, i) => (
+        {slides.map((banner, i) => {
+          const bannerSrc = getImageUrl(banner.image);
+          const skipOptimize = isRemoteImage(bannerSrc);
+
+          return (
           <div
             key={i}
             className="relative min-w-full h-[300px] sm:h-[500px] md:h-[600px] lg:h-[700px] bg-[#F5F0EA]"
@@ -201,26 +205,29 @@ export default function HeroCarousel({ banners }: { banners: readonly HeroBanner
           >
             {/* Mobile: blurred fill so the hero stays tall without empty bars */}
             <Image
-              src={getImageUrl(banner.image)}
+              src={bannerSrc}
               alt=""
               fill
               sizes="(max-width: 639px) 100vw, 1px"
               className="object-cover blur-md scale-110 sm:hidden"
               aria-hidden
               priority={i === FIRST_REAL_INDEX}
+              unoptimized={skipOptimize}
             />
             {/* Mobile: full banner visible; sm+: cover hero unchanged */}
             <Image
-              src={getImageUrl(banner.image)}
+              src={bannerSrc}
               alt={banner.alt}
               fill
               sizes="100vw"
               className="object-contain sm:object-cover"
               priority={i === FIRST_REAL_INDEX}
+              unoptimized={skipOptimize}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <button

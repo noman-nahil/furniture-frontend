@@ -23,3 +23,8 @@ export function getImageUrl(image?: string) {
   // New R2 object key
   return `${R2_PUBLIC_URL}/${image}`;
 }
+
+/** True when the resolved src is a remote URL (R2, ibb, etc.). */
+export function isRemoteImage(src?: string): boolean {
+  return typeof src === "string" && /^https?:\/\//i.test(src);
+}

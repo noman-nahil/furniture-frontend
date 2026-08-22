@@ -11,7 +11,7 @@ import {
   isProductNew,
 } from "@/lib/productPrice";
 import type { StoreProduct, LocalizedField } from "@/types/product";
-import { getImageUrl } from "@/lib/image";
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 
 function pickLocale(field: LocalizedField, locale: "fr" | "en"): string {
   return field[locale] || field.fr || "";
@@ -32,10 +32,6 @@ export type ProductCardProduct = Pick <
   | "createdAt"
 >;
 
-function isRemoteImage(src: string): boolean {
-  return /^https?:\/\//i.test(src);
-}
-
 function ProductCard({
   product,
   locale = "fr",
@@ -43,7 +39,7 @@ function ProductCard({
   product: ProductCardProduct;
   locale?: "fr" | "en";
 }) {
-  const image      = product.images?.[0] ?? "/placeholder.png";
+  const image      = getImageUrl(product.images?.[0] ?? "/placeholder.png");
   const oos        = isOutOfStock(product.quantity);
   const low        = isLowStock(product.quantity);
   const isNew      = isProductNew(product.createdAt);
@@ -64,7 +60,7 @@ function ProductCard({
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden ">
         <Image
-          src={getImageUrl(image)}
+          src={image}
           alt={displayName}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"

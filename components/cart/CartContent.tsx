@@ -15,13 +15,7 @@ import { cartApi } from "@/features/cart/api/cartApi";
 import type { ValidatedCartItem } from "@/features/cart/types";
 import { pickLocale } from "@/lib/locale";
 import Image from "next/image";
-
-function r2Url(key: string): string {
-  if (!key) return "";
-  if (key.startsWith("http://") || key.startsWith("https://")) return key;
-  const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL?.replace(/\/$/, "") ?? "";
-  return base ? `${base}/${key}` : key;
-}
+import { getImageUrl, isRemoteImage } from "@/lib/image";
 
 
 
@@ -198,6 +192,7 @@ export default function CartContent() {
               {validatedItems.map((item) => {
                 const displayName = pickLocale(item.name);
                 const slugValue = pickLocale(item.slug);
+                const imageSrc = item.image ? getImageUrl(item.image) : "/placeholder-product.png";
                 const href = slugValue ? `/products/${slugValue}` : "/products";
 
                 return (
@@ -208,11 +203,12 @@ export default function CartContent() {
                       className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gray-100 overflow-hidden ring-1 ring-gray-200/80"
                     >
                    <Image
-                    src={item.image ? r2Url(item.image) : "/placeholder-product.png"}
+                    src={imageSrc}
                     alt={displayName}
                     width={96}
                     height={96}
                     className="w-full h-full object-cover"
+                    unoptimized={isRemoteImage(imageSrc)}
                   />
                     </Link>
                     <div className="flex-1 min-w-0">
