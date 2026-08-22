@@ -2,7 +2,9 @@
 "use client";
 
 import { useState } from "react";
+import { trackPurchase } from "@/lib/analytics/events";
 import { setCart } from "@/lib/cart";
+import { pickLocale } from "@/lib/locale";
 import { checkoutApi, type DeliveryAddress } from "../api/checkoutApi";
 import type { ValidatedCartItem } from "@/features/cart/types";
 
@@ -44,6 +46,18 @@ export function usePlaceOrder() {
       setCart([]);
       window.dispatchEvent(new CustomEvent("cart-update"));
       setTrackingToken(result.trackingToken || null);
+      if (result.trackingToken) {
+        trackPurchase({
+          transactionId: result.trackingToken,
+          value: subtotal,
+          items: validatedItems.map((item) => ({
+            itemId: item.productId,
+            itemName: pickLocale(item.name),
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        });
+      }
       return true;
     }
 

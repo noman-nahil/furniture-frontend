@@ -7,7 +7,8 @@ import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import ProductCard from "@/components/product/ProductCard";
 import ProductAddToCart from "@/components/product/ProductAddToCart";
 import ProductImageViewer from "@/components/product/ProductImageViewer";
-import { APP_NAME, CURRENCY } from "@/lib/config";
+import { APP_NAME, CURRENCY, CURRENCY_CODE } from "@/lib/config";
+import { ViewItemTracker } from "@/components/analytics/ViewItemTracker";
 import {
   discountBadgeLabel,
   formatBDT,
@@ -222,6 +223,12 @@ export default async function ProductDetailPage({
     <>
       <JsonLd data={productLd} />
       <JsonLd data={breadcrumbLd} />
+      <ViewItemTracker
+        itemId={product._id}
+        itemName={displayName}
+        price={final}
+        currency={CURRENCY_CODE}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
 

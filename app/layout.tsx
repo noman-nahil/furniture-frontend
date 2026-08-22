@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ConsentAndAnalytics } from "@/components/analytics/ConsentAndAnalytics";
+import { ConsentDefaultsScript } from "@/components/analytics/ConsentDefaultsScript";
 import { Toaster } from "react-hot-toast";
 import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/seo/jsonLd";
 import {
@@ -121,9 +123,11 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ConsentDefaultsScript />
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
         <AuthProvider>
+          <ConsentAndAnalytics>
           {children}
 
           <Toaster
@@ -166,6 +170,7 @@ export default function RootLayout({
                 },
               }}
             />
+          </ConsentAndAnalytics>
         </AuthProvider>
       </body>
     </html>

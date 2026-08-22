@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSearchCombobox } from "@/hooks/search/useSearchCombobox";
 import { useSearchNavigation } from "@/hooks/search/useSearchNavigation";
 import { useSearchSuggestions } from "@/hooks/search/useSearchSuggestions";
+import { trackSearch } from "@/lib/analytics/events";
 import {
   isSearchableQuery,
   normalizeSearch,
@@ -60,20 +61,29 @@ export function useProductSearch({
     [getMergedSuggestions, searchQuery, productSuggestions, categories],
   );
 
+  const trackCommittedSearch = useCallback((value: string) => {
+    const term = normalizeSearch(value);
+    if (isSearchableQuery(term)) {
+      trackSearch(term);
+    }
+  }, []);
+
   const onCommitSearch = useCallback(() => {
+    trackCommittedSearch(searchQuery);
     commitSearch(searchQuery);
-  }, [commitSearch, searchQuery]);
+  }, [commitSearch, searchQuery, trackCommittedSearch]);
 
   const onSelectSuggestion = useCallback(
     (item: SearchSuggestion) => {
       if (item.kind === "viewAll") {
+        trackCommittedSearch(searchQuery);
         commitSearch(normalizeSearch(searchQuery));
         return;
       }
       setSearchQuery(item.label);
       navigateToHref(item.href);
     },
-    [commitSearch, searchQuery, setSearchQuery, navigateToHref],
+    [commitSearch, searchQuery, setSearchQuery, navigateToHref, trackCommittedSearch],
   );
 
   const onClear = useCallback(() => {

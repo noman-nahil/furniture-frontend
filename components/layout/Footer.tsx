@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton";
 import { APP_NAME, LOGO_PATH } from "@/lib/config";
 
 // ─────────────────────────────────────────────
@@ -268,7 +269,23 @@ export default function Footer() {
             </ul>
           </div>
 
-          <LinkColumn title="Informations" links={INFO_LINKS} />
+          <div>
+            <h3 className="text-[11px] font-semibold text-[#1A1A1A] uppercase tracking-[0.12em] mb-4 pb-1.5 border-b border-[#B8935A]/40 inline-block">
+              Informations
+            </h3>
+            <ul className="space-y-2.5">
+              {INFO_LINKS.map((link) => (
+                <li key={link.name}>
+                  <Link href={link.href} className="text-sm text-[#6B6560] hover:text-[#B8935A] transition-colors duration-200">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <CookieSettingsButton className="text-sm text-[#6B6560] hover:text-[#B8935A] transition-colors duration-200" />
+              </li>
+            </ul>
+          </div>
           <LinkColumn title="Catégories" links={CATEGORY_LINKS} />
         </div>
       </div>
@@ -283,6 +300,8 @@ export default function Footer() {
               </div>
               <p className="text-xs text-[#A09080]">
                 Copyright © {currentYear} {APP_NAME}. Tous droits réservés.
+                {" · "}
+                <CookieSettingsButton className="underline decoration-[#E8E2D9] underline-offset-2 hover:text-[#B8935A] hover:decoration-[#B8935A]" />
               </p>
             </div>
 

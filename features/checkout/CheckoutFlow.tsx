@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { trackBeginCheckout } from "@/lib/analytics/events";
+import { pickLocale } from "@/lib/locale";
 import { useCheckoutValidation } from "./hooks/useCheckoutValidation";
 import { useDeliveryForm } from "./hooks/useDeliveryForm";
 import { usePlaceOrder } from "./hooks/usePlaceOrder";
@@ -34,6 +36,20 @@ export default function CheckoutFlow({ userData }: CheckoutFlowProps) {
       router.replace("/cart");
     }
   }, [mounted, cartItems.length, step, router]);
+
+  useEffect(() => {
+    if (!mounted || initialLoading || fatalError) return;
+    if (step !== "delivery" || validatedItems.length === 0) return;
+    trackBeginCheckout({
+      value: total,
+      items: validatedItems.map((item) => ({
+        itemId: item.productId,
+        itemName: pickLocale(item.name),
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    });
+  }, [mounted, initialLoading, fatalError, step, validatedItems, total]);
 
   const [validationError, setValidationError] = useState("");
 

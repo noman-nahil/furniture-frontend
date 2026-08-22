@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { addToCart,isProductInCart } from "@/lib/cart";
 import { getFinalPrice, hasProductDiscount } from "@/lib/productPrice";
+import { pickLocale } from "@/lib/locale";
+import { trackAddToCart } from "@/lib/analytics/events";
 import type { StoreProduct } from "@/types/product";
 import toast from "react-hot-toast";
 
@@ -71,8 +73,14 @@ export default function ProductAddToCart({ product }: Props) {
       toast.error(result.reason);
       return false;
     }
+    trackAddToCart({
+      itemId: product._id,
+      itemName: pickLocale(product.name),
+      price: linePrice,
+      quantity,
+    });
     return true;
-  }, [product._id, quantity, maxQty, notActive]);
+  }, [product._id, product.name, quantity, maxQty, notActive, linePrice]);
 
   const handleAddToCart = useCallback(() => {
     if (addToCartOrError()) {
