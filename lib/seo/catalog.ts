@@ -215,6 +215,12 @@ const RESERVED_SECTION_SLUGS = new Set([
   "api",
   "account",
   "og",
+  "about",
+  "contact",
+  "privacy-policy",
+  "shipping-delivery",
+  "returns-exchanges",
+  "404",
 ]);
 
 type SitemapHomepageSection = {

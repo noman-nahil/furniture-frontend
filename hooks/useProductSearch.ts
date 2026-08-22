@@ -10,6 +10,7 @@ import {
   isSearchableQuery,
   normalizeSearch,
 } from "@/lib/search/normalize";
+import { shouldAutoRefineOnType } from "@/lib/search/navigationPolicy";
 import type { CategoryNav } from "@/types/categoryNav";
 import type { ProductSearchClient, SearchSuggestion } from "@/lib/search/types";
 
@@ -132,9 +133,14 @@ export function useProductSearch({
       setActiveIndex(-1);
       setIsOpen(true);
       scheduleRefineIfOnProducts(next);
-      scheduleSuggest(next);
+      // On /products the grid already refines via RSC — a second suggest
+      // request would hit the same regex search twice per keystroke.
+      if (!shouldAutoRefineOnType(pathname)) {
+        scheduleSuggest(next);
+      }
     },
     [
+      pathname,
       setQueryFromInput,
       setActiveIndex,
       setIsOpen,
@@ -146,8 +152,10 @@ export function useProductSearch({
   const handleFocus = useCallback(() => {
     if (!isSearchableQuery(normalizeSearch(searchQuery))) return;
     openPanel();
-    scheduleSuggest(searchQuery);
-  }, [searchQuery, openPanel, scheduleSuggest]);
+    if (!shouldAutoRefineOnType(pathname)) {
+      scheduleSuggest(searchQuery);
+    }
+  }, [pathname, searchQuery, openPanel, scheduleSuggest]);
 
   const clearSearch = useCallback(() => {
     resetSuggestions();

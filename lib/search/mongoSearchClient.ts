@@ -65,6 +65,7 @@ async function suggestFromMongo(
     search: q,
     page: "1",
     limit: String(limit),
+    includeTotal: "false",
   });
   const url = joinApiUrl(base, `/products?${qs.toString()}`);
 

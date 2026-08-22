@@ -22,12 +22,7 @@ export async function generateMetadata({
   const section = await fetchHomepageSectionBySlug(sectionSlug);
 
   if (!section) {
-    return buildPageMetadata({
-      title: "Section not found",
-      description: "This collection is unavailable.",
-      path: `/${sectionSlug}`,
-      noIndex: true,
-    });
+    notFound();
   }
 
   return buildPageMetadata({

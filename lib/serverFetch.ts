@@ -340,7 +340,12 @@ export async function serverFetch<T = unknown>(
         }
       }
 
-      logFetchError(path, errorType, { status: res.status, message });
+      // 404 means the resource is missing — callers map that to notFound().
+      // Logging it as console.error makes Next.js treat unknown URLs as
+      // overlay-worthy server errors.
+      if (res.status !== 404) {
+        logFetchError(path, errorType, { status: res.status, message });
+      }
       return fail(errorType, { status: res.status, message });
     }
 
