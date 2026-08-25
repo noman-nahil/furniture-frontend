@@ -122,7 +122,9 @@ export default async function SubcategoryPage({ params, searchParams }: PageProp
     limit: String(DEFAULT_LIMIT),
   });
 
-  const res = await serverFetch(`/products?${qs.toString()}`);
+  const res = await serverFetch(`/products?${qs.toString()}`, {
+    revalidate: 60,
+  });
   const isError = isServerFetchError(res);
 
   let products: ListProduct[] = [];

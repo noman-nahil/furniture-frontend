@@ -3,13 +3,14 @@
  *
  * Middleware runs on every storefront request, so the answer is cached in
  * module scope and concurrent misses share a single in-flight request. Each
- * server instance therefore asks the API at most twice a minute, and a toggle
- * made in the admin panel rolls out within MAINTENANCE_CACHE_TTL_MS.
+ * server instance therefore asks the API at most once per
+ * MAINTENANCE_CACHE_TTL_MS, and a toggle made in the admin panel rolls out
+ * within that window.
  */
 
 import { joinApiUrl } from "@/lib/apiUrl";
 
-const MAINTENANCE_CACHE_TTL_MS = 30_000;
+const MAINTENANCE_CACHE_TTL_MS = 300_000;
 // Render free-tier cold starts commonly take 5–15s. 2s was aborting every
 // first request after sleep; keep middleware bounded but give the API time
 // to wake. Warm responses are ~1s.

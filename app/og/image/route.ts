@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { getImageUrl } from "@/lib/image";
@@ -8,6 +10,9 @@ export const runtime = "nodejs";
 /** WhatsApp silently drops previews when og:image is much larger than ~300KB. */
 const MAX_WIDTH = 1200;
 const JPEG_QUALITY = 82;
+/** Hard cap on the *input* we buffer. Next Data Cache rejects items over 2MB;
+ *  production `/og-default.jpg` is already ~3.2MB, so we must not put it there. */
+const MAX_UPSTREAM_BYTES = 8 * 1024 * 1024;
 
 function r2Hostname(): string | null {
   const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL?.trim();
@@ -53,6 +58,63 @@ function resolveUpstream(src: string): string | null {
   }
 }
 
+/**
+ * Load the source bytes. Site-relative files are read from `public/` so we
+ * never HTTP-fetch (and Data-Cache) a 3MB `/og-default.jpg` from ourselves.
+ * Remote/R2 fetches use `cache: "no-store"` — Next's Data Cache has a 2MB
+ * item limit and would log on every request for oversized originals.
+ */
+async function loadUpstreamBytes(
+  src: string,
+  upstreamUrl: string,
+): Promise<{ ok: true; bytes: Buffer } | { ok: false; status: 404 | 413 }> {
+  const relative = src.trim();
+  if (
+    relative.startsWith("/") &&
+    !relative.includes("..") &&
+    !relative.includes("\\")
+  ) {
+    const diskPath = path.join(
+      process.cwd(),
+      "public",
+      relative.replace(/^\/+/, ""),
+    );
+    try {
+      const bytes = await readFile(diskPath);
+      if (bytes.byteLength > MAX_UPSTREAM_BYTES) {
+        return { ok: false, status: 413 };
+      }
+      return { ok: true, bytes };
+    } catch {
+      // Not in this checkout — production may still serve it over HTTP.
+    }
+  }
+
+  const upstream = await fetch(upstreamUrl, {
+    cache: "no-store",
+    headers: { Accept: "image/*" },
+  });
+
+  if (!upstream.ok) {
+    return { ok: false, status: 404 };
+  }
+
+  const declared = Number.parseInt(
+    upstream.headers.get("content-length") ?? "",
+    10,
+  );
+  if (Number.isFinite(declared) && declared > MAX_UPSTREAM_BYTES) {
+    return { ok: false, status: 413 };
+  }
+
+  const bytes = Buffer.from(await upstream.arrayBuffer());
+  if (bytes.byteLength > MAX_UPSTREAM_BYTES) {
+    return { ok: false, status: 413 };
+  }
+
+  return { ok: true, bytes };
+}
+
 export async function GET(req: NextRequest) {
   const src = req.nextUrl.searchParams.get("src");
   if (!src) {
@@ -65,17 +127,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(upstreamUrl, {
-      // Cache at the edge / Next data cache so messengers don't hammer R2.
-      next: { revalidate: 86_400 },
-      headers: { Accept: "image/*" },
-    });
-
-    if (!upstream.ok) {
+    const loaded = await loadUpstreamBytes(src, upstreamUrl);
+    if (!loaded.ok) {
+      if (loaded.status === 413) {
+        return new NextResponse("Image too large", { status: 413 });
+      }
       return new NextResponse("Image not found", { status: 404 });
     }
 
-    const input = Buffer.from(await upstream.arrayBuffer());
+    const input = loaded.bytes;
     const jpeg = await sharp(input)
       .rotate()
       .resize({

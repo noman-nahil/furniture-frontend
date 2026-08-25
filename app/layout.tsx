@@ -14,6 +14,7 @@ import {
   getSiteUrl,
   SITE_KEYWORDS,
   SITE_NAME,
+  socialImageUrl,
 } from "@/lib/seo/site";
 
 // ─────────────────────────────────────────────
@@ -71,10 +72,11 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     images: [
       {
-        url: DEFAULT_OG_IMAGE.url,
+        url: socialImageUrl(),
         width: DEFAULT_OG_IMAGE.width,
         height: DEFAULT_OG_IMAGE.height,
         alt: DEFAULT_OG_IMAGE.alt,
+        type: "image/jpeg",
       },
     ],
   },
@@ -82,7 +84,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
-    images: [DEFAULT_OG_IMAGE.url],
+    images: [socialImageUrl()],
   },
   robots: {
     index: true,

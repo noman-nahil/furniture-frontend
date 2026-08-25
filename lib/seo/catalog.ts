@@ -88,14 +88,17 @@ async function loadProductBySlugOrId(
     revalidate: 60,
   });
   if (!isServerFetchError(slugRes)) {
-    const product = extractProduct(slugRes);
-    if (product) return product;
+    return extractProduct(slugRes);
   }
 
-  // Note: if your backend's /products/slug/:slug returns 404 for a valid
-  // slug (not a 5xx), serverFetch returns a client_error and we fall
-  // through correctly. If the ID is also invalid, we return null and
-  // the page calls notFound().
+  // The id in the URL is usually a slug. Only try GET /products/:id when
+  // the slug route confirms the resource is missing (404). A 429/5xx/other
+  // 4xx must not spend a second rate-limit slot — the page should 404/fail
+  // rather than amplify origin load.
+  if (slugRes.status !== 404) {
+    return null;
+  }
+
   const idRes = await serverFetch(`/products/${id}?locale=${locale}`, {
     revalidate: 60,
   });
