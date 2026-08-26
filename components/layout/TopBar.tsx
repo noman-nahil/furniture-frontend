@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 
 // ── Placeholder content — replace these if needed ──────────────────────
 // Tagline alternates EN ↔ FR every second with the background cycle.
-const TAGLINE_EN = "Open every day, 9:30am – 8pm, including holidays.";
+const TAGLINE_EN = "Open every day, 10:00am – 8:00pm, including holidays.";
 const TAGLINE_FR =
-  "Ouvert tous les jours, 9h30 – 20h, y compris les jours fériés.";
+  "Ouvert tous les jours, 10h00 – 20h00, y compris les jours fériés.";
 
 const SOCIAL_LINKS = {
   facebook: "https://www.facebook.com/meublesdeparisofficial",
