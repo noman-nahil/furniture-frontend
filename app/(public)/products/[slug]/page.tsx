@@ -7,7 +7,7 @@ import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import ProductCard from "@/components/product/ProductCard";
 import ProductAddToCart from "@/components/product/ProductAddToCart";
 import ProductImageViewer from "@/components/product/ProductImageViewer";
-import { APP_NAME, CURRENCY, CURRENCY_CODE } from "@/lib/config";
+import { APP_NAME, CURRENCY_CODE } from "@/lib/config";
 import { ViewItemTracker } from "@/components/analytics/ViewItemTracker";
 import {
   discountBadgeLabel,
@@ -191,9 +191,8 @@ export default async function ProductDetailPage({
   const offLabel   = discountBadgeLabel(product);
 
   const TRUST = [
-    `Free shipping on orders over ${CURRENCY}500`,
-    "30-day returns",
-    "Secure checkout",
+    { text: "Free shipping around Paris" },
+    { text: "Retours selon la politique de retour", href: "/returns-exchanges" },
   ] as const;
 
   const sd = product.structuredData;
@@ -328,12 +327,21 @@ export default async function ProductDetailPage({
             <ProductAddToCart product={product} />
 
             <div className="flex flex-col gap-2 pt-1">
-              {TRUST.map((text) => (
-                <div key={text} className="flex items-center gap-2.5">
+              {TRUST.map((item) => (
+                <div key={item.text} className="flex items-center gap-2.5">
                   <span className="w-4 h-4 rounded-full bg-[#F5EDD8] flex items-center justify-center shrink-0">
                     <Check className="w-2.5 h-2.5 text-[#B8935A]" aria-hidden />
                   </span>
-                  <span className="text-xs text-[#6B6560]">{text}</span>
+                  {"href" in item ? (
+                    <Link
+                      href={item.href}
+                      className="text-xs text-[#6B6560] hover:text-[#B8935A] transition-colors"
+                    >
+                      {item.text}
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-[#6B6560]">{item.text}</span>
+                  )}
                 </div>
               ))}
             </div>
