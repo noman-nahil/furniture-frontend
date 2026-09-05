@@ -17,7 +17,7 @@ import { ProductFiltersToolbar } from "./components/ProductFiltersToolbar";
 import { ProductFormModal } from "./components/ProductFormModal";
 import { BulkActionBar } from "./components/BulkActionBar";
 import { DeleteProductDialog } from "./components/DeleteProductDialog";
-import type { Product, ProductListResponse, ProductsManagementRole, StatusKey } from "./types";
+import type { Product, ProductListResponse, ProductsManagementRole, StatusKey, StockFilterKey } from "./types";
 
 type ProductsManagementProps = {
   title?: string;
@@ -50,7 +50,9 @@ export function ProductsManagement({
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<StatusKey | "ALL" | "DISCOUNTED">("ALL");
+  const [selectedStock, setSelectedStock] = useState<StockFilterKey>("ALL");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -58,8 +60,14 @@ export function ProductsManagement({
   useEffect(() => setPage(1), [debouncedSearch]);
 
   const filters = useMemo(
-    () => ({ search: debouncedSearch, category: selectedCategory, status: selectedStatus }),
-    [debouncedSearch, selectedCategory, selectedStatus]
+    () => ({
+      search: debouncedSearch,
+      category: selectedCategory,
+      subcategory: selectedSubcategory,
+      status: selectedStatus,
+      stock: selectedStock,
+    }),
+    [debouncedSearch, selectedCategory, selectedSubcategory, selectedStatus, selectedStock]
   );
 
   // ─── Data ─────────────────────────────────────────────────────────────
@@ -68,8 +76,8 @@ export function ProductsManagement({
   const { data: subcategories = [] } = useSubcategoriesQuery();
 
   const filterSignature = useMemo(
-    () => `${debouncedSearch}\0${selectedCategory}\0${selectedStatus}`,
-    [debouncedSearch, selectedCategory, selectedStatus],
+    () => `${debouncedSearch}\0${selectedCategory}\0${selectedSubcategory}\0${selectedStatus}\0${selectedStock}`,
+    [debouncedSearch, selectedCategory, selectedSubcategory, selectedStatus, selectedStock],
   );
 
   // Keep the last successful page visible while paginating (same filters only).
@@ -103,6 +111,12 @@ export function ProductsManagement({
   function handleCategoryChange(value: string) {
     setPage(1);
     setSelectedCategory(value);
+    setSelectedSubcategory("");
+  }
+
+  function handleSubcategoryChange(value: string) {
+    setPage(1);
+    setSelectedSubcategory(value);
   }
 
   function handleStatusChange(value: StatusKey | "ALL" | "DISCOUNTED") {
@@ -110,15 +124,26 @@ export function ProductsManagement({
     setSelectedStatus(value);
   }
 
+  function handleStockChange(value: StockFilterKey) {
+    setPage(1);
+    setSelectedStock(value);
+  }
+
   function handleClearFilters() {
     setPage(1);
     setSearchQuery("");
     setSelectedCategory("");
+    setSelectedSubcategory("");
     setSelectedStatus("ALL");
+    setSelectedStock("ALL");
   }
 
   const hasActiveFilters =
-    debouncedSearch.trim() !== "" || selectedCategory !== "" || selectedStatus !== "ALL";
+    debouncedSearch.trim() !== "" ||
+    selectedCategory !== "" ||
+    selectedSubcategory !== "" ||
+    selectedStatus !== "ALL" ||
+    selectedStock !== "ALL";
 
   // ─── Form (modal) ─────────────────────────────────────────────────────
   const formState = useProductForm(useCallback(() => {
@@ -254,7 +279,12 @@ export function ProductsManagement({
           onSearchChange={setSearchQuery}
           selectedCategory={selectedCategory}
           onCategoryChange={handleCategoryChange}
+          selectedSubcategory={selectedSubcategory}
+          onSubcategoryChange={handleSubcategoryChange}
+          selectedStock={selectedStock}
+          onStockChange={handleStockChange}
           categories={categories}
+          subcategories={subcategories}
           isFetching={isFetching}
           visibleCount={products.length}
           filteredTotal={total}

@@ -55,7 +55,9 @@ export const productsApi = {
         limit: pageSize,
         search: filters.search,
         category: filters.category,
+        subcategory: filters.subcategory,
         status: filters.status,
+        stock: filters.stock,
       })}`
     ),
 

@@ -31,7 +31,7 @@ export function ProductCatalogEmpty({
       </h3>
       <p className="mt-1 max-w-sm text-sm text-slate-500">
         {isFiltered
-          ? "Try adjusting your search, category, or status filter."
+          ? "Try adjusting your search, category, stock, or status filter."
           : "Add your first product to start building your catalog."}
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2">

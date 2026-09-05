@@ -2,6 +2,8 @@
 
 export type StatusKey = "active" | "inactive" | "draft";
 
+export type StockFilterKey = "ALL" | "out_of_stock" | "low_stock";
+
 export type LocalizedText = {
   fr: string;
   en?: string;
@@ -71,7 +73,9 @@ export type ProductListResponse = {
 export type ProductFilters = {
   search?: string;
   category?: string;
+  subcategory?: string;
   status?: StatusKey | "ALL" | "DISCOUNTED";
+  stock?: StockFilterKey;
 };
 
 export type SeoFormValues = {

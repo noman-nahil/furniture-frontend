@@ -1,8 +1,9 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Loader2, Search, X } from "lucide-react";
-import type { Category, StatusKey } from "../types";
+import { subcategoryParentKey } from "../utils/productFilters";
+import type { Category, StatusKey, StockFilterKey, Subcategory } from "../types";
 
 export type ProductFilterStats = {
   totalProducts: number;
@@ -30,7 +31,12 @@ type ProductFiltersToolbarProps = {
   onSearchChange: (value: string) => void;
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
+  selectedSubcategory: string;
+  onSubcategoryChange: (value: string) => void;
+  selectedStock: StockFilterKey;
+  onStockChange: (value: StockFilterKey) => void;
   categories: Category[];
+  subcategories: Subcategory[];
   isFetching: boolean;
   visibleCount: number;
   filteredTotal: number;
@@ -44,11 +50,24 @@ function ProductFiltersToolbarComponent({
   onSearchChange,
   selectedCategory,
   onCategoryChange,
+  selectedSubcategory,
+  onSubcategoryChange,
+  selectedStock,
+  onStockChange,
   categories,
+  subcategories,
   isFetching,
   visibleCount,
   filteredTotal,
 }: ProductFiltersToolbarProps) {
+  const subsForCategory = useMemo(
+    () =>
+      selectedCategory
+        ? subcategories.filter((s) => subcategoryParentKey(s) === String(selectedCategory))
+        : [],
+    [selectedCategory, subcategories],
+  );
+
   return (
     <div className="space-y-4">
       <div
@@ -91,7 +110,7 @@ function ProductFiltersToolbarComponent({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative min-w-0 flex-1 sm:max-w-md">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
@@ -132,6 +151,40 @@ function ProductFiltersToolbarComponent({
                 {c.name}
               </option>
             ))}
+          </select>
+
+          <select
+            id="product-subcategory-filter"
+            value={selectedSubcategory}
+            onChange={(e) => onSubcategoryChange(e.target.value)}
+            disabled={!selectedCategory}
+            aria-label="Filter by subcategory"
+            className="w-full shrink-0 rounded-lg border border-slate-800/80 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600/40 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[180px]"
+          >
+            <option value="">
+              {selectedCategory
+                ? subsForCategory.length === 0
+                  ? "No subcategories"
+                  : "All subcategories"
+                : "All subcategories"}
+            </option>
+            {subsForCategory.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            id="product-stock-filter"
+            value={selectedStock}
+            onChange={(e) => onStockChange(e.target.value as StockFilterKey)}
+            aria-label="Filter by stock"
+            className="w-full shrink-0 rounded-lg border border-slate-800/80 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600/40 sm:w-auto sm:min-w-[160px]"
+          >
+            <option value="ALL">All stock</option>
+            <option value="out_of_stock">Out of stock</option>
+            <option value="low_stock">Low stock (1–5)</option>
           </select>
         </div>
 

@@ -14,6 +14,13 @@ import { ProductRowMenu } from "./ProductRowMenu";
 import type { Category, Product, StatusKey, Subcategory } from "../types";
 
 const COL_SPAN = 7;
+const LOW_STOCK_THRESHOLD = 5;
+
+function quantityTone(quantity: number): string {
+  if (quantity <= 0) return "tabular-nums text-rose-300";
+  if (quantity <= LOW_STOCK_THRESHOLD) return "tabular-nums text-amber-300";
+  return "tabular-nums text-slate-300";
+}
 
 type ProductTableProps = {
   products: Product[];
@@ -333,7 +340,7 @@ function ProductMobileCard({
             <span className={`h-1.5 w-1.5 rounded-full ${sm.dot}`} aria-hidden />
             {sm.label}
           </span>
-          <span className="tabular-nums text-slate-500">Qty {p.quantity ?? 0}</span>
+          <span className={quantityTone(p.quantity ?? 0)}>Qty {p.quantity ?? 0}</span>
         </div>
       </div>
     </div>
@@ -418,7 +425,7 @@ const ProductRow = memo(function ProductRow({
           {sm.label}
         </span>
       </td>
-      <td className="px-4 py-3.5 align-middle tabular-nums text-slate-300">{p.quantity ?? 0}</td>
+      <td className={`px-4 py-3.5 align-middle ${quantityTone(p.quantity ?? 0)}`}>{p.quantity ?? 0}</td>
       <td className="px-4 py-3.5 align-middle">
         <ProductRowMenu
           productId={p._id}
