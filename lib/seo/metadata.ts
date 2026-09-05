@@ -46,6 +46,7 @@ export function buildPageMetadata({
   const ogImages = [
     {
       url: ogImageUrl,
+      secureUrl: ogImageUrl,
       width: DEFAULT_OG_IMAGE.width,
       height: DEFAULT_OG_IMAGE.height,
       alt: imageAlt || title,

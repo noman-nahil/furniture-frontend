@@ -73,6 +73,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: socialImageUrl(),
+        secureUrl: socialImageUrl(),
         width: DEFAULT_OG_IMAGE.width,
         height: DEFAULT_OG_IMAGE.height,
         alt: DEFAULT_OG_IMAGE.alt,

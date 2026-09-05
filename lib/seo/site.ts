@@ -95,7 +95,7 @@ export function absoluteImageUrl(
 /**
  * Messenger-safe OG image URL (WhatsApp / Facebook / iMessage).
  * Product gallery files are WebP on R2; those clients often omit the
- * thumbnail entirely. Proxy through `/og/image` to serve a resized JPEG.
+ * thumbnail entirely. Proxy through `/og/image.jpg` to serve a resized JPEG.
  */
 export function socialImageUrl(
   image?: string | null,
@@ -109,5 +109,7 @@ export function socialImageUrl(
     return /^https?:\/\//i.test(src) ? src : absoluteUrl(src);
   }
 
-  return absoluteUrl(`/og/image?src=${encodeURIComponent(src)}`);
+  // Path must end in `.jpg` *before* the query string. WhatsApp often
+  // skips `/og/image?src=…` even when the response is a valid JPEG.
+  return absoluteUrl(`/og/image.jpg?src=${encodeURIComponent(src)}`);
 }

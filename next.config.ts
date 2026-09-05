@@ -17,6 +17,17 @@ if (!r2Hostname && process.env.NODE_ENV !== "production") {
 }
 
 const nextConfig: NextConfig = {
+  // Keep OG tags in <head> for WhatsApp / Facebook / Slack (they do not
+  // execute JS and stop reading if metadata streams into <body>).
+  htmlLimitedBots: /WhatsApp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|SkypeUriPreview/i,
+  async rewrites() {
+    return [
+      {
+        source: "/og/image.jpg",
+        destination: "/og/image",
+      },
+    ];
+  },
   async redirects() {
     return [
       {

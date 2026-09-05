@@ -136,13 +136,16 @@ export async function GET(req: NextRequest) {
     }
 
     const input = loaded.bytes;
+    // Always emit a real 1200×630 JPEG. Declaring those dimensions in
+    // og:image:width/height while serving a smaller "fit: inside" crop is a
+    // common reason WhatsApp draws a title card with no thumbnail.
     const jpeg = await sharp(input)
       .rotate()
       .resize({
         width: MAX_WIDTH,
         height: 630,
-        fit: "inside",
-        withoutEnlargement: true,
+        fit: "contain",
+        background: { r: 245, g: 240, b: 234 },
       })
       .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
       .toBuffer();
@@ -151,7 +154,8 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "image/jpeg",
-        "Content-Disposition": "inline",
+        "Content-Length": String(jpeg.byteLength),
+        "Content-Disposition": 'inline; filename="opengraph.jpg"',
         "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
       },
     });
@@ -159,4 +163,10 @@ export async function GET(req: NextRequest) {
     console.error("[og/image] failed to build social JPEG", err);
     return new NextResponse("Failed to process image", { status: 502 });
   }
+}
+
+/** Facebook / WhatsApp often HEAD the image first; echo GET headers. */
+export async function HEAD(req: NextRequest) {
+  const res = await GET(req);
+  return new NextResponse(null, { status: res.status, headers: res.headers });
 }
