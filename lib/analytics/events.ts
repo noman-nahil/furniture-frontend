@@ -1,5 +1,6 @@
 import { CURRENCY_CODE } from "@/lib/config";
 import { readStoredConsent } from "@/lib/consent/storage";
+import { createAnalyticsEventId } from "./metaBrowser";
 import { getMetaPixelId } from "./config";
 import { pushDataLayer, type DataLayerEntry } from "./dataLayer";
 
@@ -32,6 +33,11 @@ export type PurchasePayload = {
   value: number;
   currency?: string;
   items: AnalyticsItem[];
+  eventId?: string;
+};
+
+export type SubscribedButtonClickPayload = {
+  eventId?: string;
 };
 
 const PURCHASE_DEDUP_PREFIX = "mdp-purchase:";
@@ -68,28 +74,81 @@ function writeSessionKey(key: string, value: string): void {
   }
 }
 
+const META_EVENT_NAMES: Record<string, string> = {
+  page_view: "PageView",
+  view_item: "ViewContent",
+  add_to_cart: "AddToCart",
+  begin_checkout: "InitiateCheckout",
+  purchase: "Purchase",
+  search: "Search",
+  SubscribedButtonClick: "SubscribedButtonClick",
+};
+
+function withEventId(entry: DataLayerEntry, eventId?: string): DataLayerEntry {
+  const eventName = typeof entry.event === "string" ? entry.event : "";
+  return {
+    ...entry,
+    event_id: eventId || createAnalyticsEventId(),
+    meta_event: META_EVENT_NAMES[eventName] || eventName,
+  };
+}
+
 function pushMarketingEvent(entry: DataLayerEntry): void {
   if (!canTrackMarketing()) return;
   pushDataLayer(entry);
 }
 
+export const META_CONSENT_GRANTED_EVENT = "meta_consent_granted";
+
+function hasPublishedMetaConsentGranted(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.__mdpMetaConsentGrantedPublished === true;
+}
+
+function markMetaConsentGrantedPublished(): void {
+  if (typeof window === "undefined") return;
+  window.__mdpMetaConsentGrantedPublished = true;
+}
+
+/**
+ * GTM Custom Event that may initialize the Meta Pixel base tag.
+ * Once per page load — never on denied consent.
+ */
+export function publishMetaConsentGranted(): void {
+  if (!canTrackMarketing()) return;
+  if (hasPublishedMetaConsentGranted()) return;
+  const pixelId = getMetaPixelId();
+  if (!pixelId) return;
+  markMetaConsentGrantedPublished();
+  pushDataLayer({
+    event: META_CONSENT_GRANTED_EVENT,
+    meta_pixel_id: pixelId,
+  });
+}
+
 export function publishMetaPixelId(): void {
+  if (!canTrackMarketing()) return;
   const pixelId = getMetaPixelId();
   if (!pixelId) return;
   pushDataLayer({ meta_pixel_id: pixelId });
+  publishMetaConsentGranted();
 }
 
 export function buildPageViewEvent(
   pagePath: string,
   pageLocation: string,
   pageTitle: string,
+  eventId?: string,
 ): DataLayerEntry {
-  return {
-    event: "page_view",
-    page_path: pagePath,
-    page_location: pageLocation,
-    page_title: pageTitle,
-  };
+  return withEventId(
+    {
+      event: "page_view",
+      page_path: pagePath,
+      page_location: pageLocation,
+      page_title: pageTitle,
+    },
+    eventId,
+  );
 }
 
 export function trackPageView(pagePath: string): void {
@@ -101,7 +160,7 @@ export function trackPageView(pagePath: string): void {
 
 export function buildViewItemEvent(payload: ViewItemPayload): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
-  return {
+  return withEventId({
     event: "view_item",
     currency,
     value: payload.price,
@@ -120,7 +179,7 @@ export function buildViewItemEvent(payload: ViewItemPayload): DataLayerEntry {
         }),
       ],
     },
-  };
+  });
 }
 
 export function trackViewItem(payload: ViewItemPayload): void {
@@ -130,7 +189,7 @@ export function trackViewItem(payload: ViewItemPayload): void {
 export function buildAddToCartEvent(payload: AddToCartPayload): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
   const value = payload.price * payload.quantity;
-  return {
+  return withEventId({
     event: "add_to_cart",
     currency,
     value,
@@ -142,7 +201,7 @@ export function buildAddToCartEvent(payload: AddToCartPayload): DataLayerEntry {
       value,
       items: [toEcommerceItem(payload)],
     },
-  };
+  });
 }
 
 export function trackAddToCart(payload: AddToCartPayload): void {
@@ -153,7 +212,7 @@ export function buildBeginCheckoutEvent(
   payload: BeginCheckoutPayload,
 ): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
-  return {
+  return withEventId({
     event: "begin_checkout",
     currency,
     value: payload.value,
@@ -163,7 +222,7 @@ export function buildBeginCheckoutEvent(
       value: payload.value,
       items: payload.items.map(toEcommerceItem),
     },
-  };
+  });
 }
 
 function checkoutSignature(payload: BeginCheckoutPayload): string {
@@ -182,19 +241,22 @@ export function trackBeginCheckout(payload: BeginCheckoutPayload): void {
 
 export function buildPurchaseEvent(payload: PurchasePayload): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
-  return {
-    event: "purchase",
-    currency,
-    value: payload.value,
-    transaction_id: payload.transactionId,
-    content_ids: payload.items.map((item) => item.itemId),
-    ecommerce: {
-      transaction_id: payload.transactionId,
+  return withEventId(
+    {
+      event: "purchase",
       currency,
       value: payload.value,
-      items: payload.items.map(toEcommerceItem),
+      transaction_id: payload.transactionId,
+      content_ids: payload.items.map((item) => item.itemId),
+      ecommerce: {
+        transaction_id: payload.transactionId,
+        currency,
+        value: payload.value,
+        items: payload.items.map(toEcommerceItem),
+      },
     },
-  };
+    payload.eventId,
+  );
 }
 
 export function trackPurchase(payload: PurchasePayload): void {
@@ -207,11 +269,26 @@ export function trackPurchase(payload: PurchasePayload): void {
   pushMarketingEvent(buildPurchaseEvent({ ...payload, transactionId }));
 }
 
+export function buildSubscribedButtonClickEvent(
+  payload: SubscribedButtonClickPayload = {},
+): DataLayerEntry {
+  return withEventId(
+    { event: "SubscribedButtonClick" },
+    payload.eventId,
+  );
+}
+
+export function trackSubscribedButtonClick(
+  payload: SubscribedButtonClickPayload = {},
+): void {
+  pushMarketingEvent(buildSubscribedButtonClickEvent(payload));
+}
+
 export function buildSearchEvent(searchTerm: string): DataLayerEntry {
-  return {
+  return withEventId({
     event: "search",
     search_term: searchTerm,
-  };
+  });
 }
 
 export function trackSearch(searchTerm: string): void {
