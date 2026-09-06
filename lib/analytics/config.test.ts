@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getGtmId, getMetaPixelId } from "./config";
+import { getGtmId, getMetaPixelId, PRODUCTION_META_PIXEL_ID } from "./config";
 
 const ORIGINAL_GTM = process.env.NEXT_PUBLIC_GTM_ID;
 const ORIGINAL_PIXEL = process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -34,5 +34,17 @@ describe("getMetaPixelId", () => {
     expect(getMetaPixelId()).toBeNull();
     process.env.NEXT_PUBLIC_META_PIXEL_ID = "not-a-pixel";
     expect(getMetaPixelId()).toBeNull();
+  });
+
+  it("locks production to the intended Pixel ID", () => {
+    const previous = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      process.env.NEXT_PUBLIC_META_PIXEL_ID = "511565595135268";
+      expect(getMetaPixelId()).toBe(PRODUCTION_META_PIXEL_ID);
+      expect(getMetaPixelId()).toBe("253140121215662");
+    } finally {
+      process.env.NODE_ENV = previous;
+    }
   });
 });

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { getMetaCapiContext } from "@/lib/analytics/metaBrowser";
 import { trackPurchase } from "@/lib/analytics/events";
 import { setCart } from "@/lib/cart";
 import { pickLocale } from "@/lib/locale";
@@ -32,12 +33,14 @@ export function usePlaceOrder() {
     setError("");
     setLoading(true);
 
+    const meta = getMetaCapiContext();
     const result = await checkoutApi.placeOrder({
       items: validatedItems,
       subtotal,
       deliveryAddress,
       deliveryType: "cash_on_delivery",
       idempotencyKey,
+      meta: meta ?? undefined,
     });
 
     setLoading(false);
@@ -50,6 +53,7 @@ export function usePlaceOrder() {
         trackPurchase({
           transactionId: result.trackingToken,
           value: subtotal,
+          eventId: meta?.event_id,
           items: validatedItems.map((item) => ({
             itemId: item.productId,
             itemName: pickLocale(item.name),

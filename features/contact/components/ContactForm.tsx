@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { getMetaCapiContext } from "@/lib/analytics/metaBrowser";
+import { trackSubscribedButtonClick } from "@/lib/analytics/events";
 import { submitContact } from "../api/contactApi";
 
 const inputClass =
@@ -55,16 +57,21 @@ export function ContactForm() {
 
     setLoading(true);
     setSuccess("");
+    const meta = getMetaCapiContext();
     const result = await submitContact({
       name,
       phone,
       email,
       message,
       website: values.website,
+      meta: meta ?? undefined,
     });
     setLoading(false);
 
     if (result.success) {
+      if (meta) {
+        trackSubscribedButtonClick({ eventId: meta.event_id });
+      }
       setValues(INITIAL);
       setSuccess(result.message);
       return;

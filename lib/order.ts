@@ -4,6 +4,7 @@
 
 import { getClientApiBaseUrl, joinApiUrl } from "@/lib/apiUrl";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import type { MetaCapiContext } from "@/lib/analytics/metaBrowser";
 import type { CartItem } from "./cart";
 import type { ValidatedCartItem } from "@/features/cart/types";
 import type { LocalizedField } from "@/types/product";
@@ -25,6 +26,7 @@ export type OrderPayload = {
   guestName?: string;
   guestPhone?: string;
   idempotencyKey?: string;
+  meta?: MetaCapiContext;
 };
 
 function getBaseUrl(): string {

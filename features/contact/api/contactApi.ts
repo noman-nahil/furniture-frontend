@@ -1,3 +1,4 @@
+import type { MetaCapiContext } from "@/lib/analytics/metaBrowser";
 import { getClientApiBaseUrl, joinApiUrl } from "@/lib/apiUrl";
 
 export type ContactPayload = {
@@ -6,6 +7,7 @@ export type ContactPayload = {
   email: string;
   message: string;
   website?: string;
+  meta?: MetaCapiContext;
 };
 
 export type ContactSubmitResult = {

@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { publishMetaPixelId } from "@/lib/analytics/events";
 import { applyConsentMode } from "@/lib/analytics/dataLayer";
 import {
   getConsentSnapshot,
@@ -48,7 +49,10 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setReady(true);
-    if (decision) applyConsentMode(decision);
+    if (decision) {
+      applyConsentMode(decision);
+      if (decision.marketing) publishMetaPixelId();
+    }
   }, [decision]);
 
   const acceptAll = useCallback(() => {
