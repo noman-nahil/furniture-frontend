@@ -224,6 +224,7 @@ export default async function ProductDetailPage({
       <JsonLd data={breadcrumbLd} />
       <ViewItemTracker
         itemId={product._id}
+        contentId={product.slug?.fr}
         itemName={displayName}
         price={final}
         currency={CURRENCY_CODE}

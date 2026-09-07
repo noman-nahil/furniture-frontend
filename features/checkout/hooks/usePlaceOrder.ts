@@ -56,6 +56,7 @@ export function usePlaceOrder() {
           eventId: meta?.event_id,
           items: validatedItems.map((item) => ({
             itemId: item.productId,
+            contentId: item.slug?.fr,
             itemName: pickLocale(item.name),
             price: item.price,
             quantity: item.quantity,

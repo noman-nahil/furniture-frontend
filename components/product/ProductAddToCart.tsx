@@ -75,12 +75,13 @@ export default function ProductAddToCart({ product }: Props) {
     }
     trackAddToCart({
       itemId: product._id,
+      contentId: product.slug?.fr,
       itemName: pickLocale(product.name),
       price: linePrice,
       quantity,
     });
     return true;
-  }, [product._id, product.name, quantity, maxQty, notActive, linePrice]);
+  }, [product._id, product.slug, product.name, quantity, maxQty, notActive, linePrice]);
 
   const handleAddToCart = useCallback(() => {
     if (addToCartOrError()) {

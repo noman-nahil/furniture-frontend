@@ -56,7 +56,7 @@ describe("event builders", () => {
     expect(event.event).toBe("view_item");
     expect(event.currency).toBe("EUR");
     expect(event.value).toBe(2590);
-    expect(event.content_ids).toEqual(["abc"]);
+    expect(event).not.toHaveProperty("content_ids");
     expect(typeof event.event_id).toBe("string");
     expect(event.meta_event).toBe("ViewContent");
   });
@@ -115,6 +115,191 @@ describe("event builders", () => {
     expect(event.search_term).toBe("canapé");
     expect(typeof event.event_id).toBe("string");
     expect(event.meta_event).toBe("Search");
+  });
+});
+
+describe("Meta contentId vs GA4 itemId", () => {
+  const mongoId = "507f1f77bcf86cd799439011";
+  const slugFr = "canape-d-angle";
+
+  function assertNoMongoContentIds(event: Record<string, unknown>) {
+    const contentIds = event.content_ids;
+    if (contentIds === undefined) return;
+    expect(contentIds).not.toContain(mongoId);
+    expect(contentIds).not.toEqual(expect.arrayContaining([mongoId]));
+  }
+
+  it("uses slug.fr for ViewContent content_ids and Mongo _id for GA4 item_id", () => {
+    const event = buildViewItemEvent({
+      itemId: mongoId,
+      contentId: slugFr,
+      itemName: "Canapé",
+      price: 2590,
+      currency: "EUR",
+    });
+    expect(event.content_ids).toEqual([slugFr]);
+    expect(event.ecommerce).toMatchObject({
+      items: [{ item_id: mongoId }],
+    });
+    assertNoMongoContentIds(event);
+  });
+
+  it("uses slug.fr for AddToCart content_ids and Mongo _id for GA4 item_id", () => {
+    const event = buildAddToCartEvent({
+      itemId: mongoId,
+      contentId: slugFr,
+      itemName: "Canapé",
+      price: 100,
+      quantity: 2,
+      currency: "EUR",
+    });
+    expect(event.content_ids).toEqual([slugFr]);
+    expect(event.ecommerce).toMatchObject({
+      items: [{ item_id: mongoId }],
+    });
+    assertNoMongoContentIds(event);
+  });
+
+  it("uses slug.fr for InitiateCheckout and Purchase content_ids and Mongo _id for GA4 item_id", () => {
+    const items = [
+      {
+        itemId: mongoId,
+        contentId: slugFr,
+        itemName: "Lit",
+        price: 649,
+        quantity: 1,
+      },
+    ];
+    const checkout = buildBeginCheckoutEvent({
+      value: 649,
+      items,
+      currency: "EUR",
+    });
+    expect(checkout.content_ids).toEqual([slugFr]);
+    expect(checkout.ecommerce).toMatchObject({
+      items: [{ item_id: mongoId }],
+    });
+    assertNoMongoContentIds(checkout);
+
+    const purchase = buildPurchaseEvent({
+      transactionId: "tok-1",
+      value: 649,
+      items,
+      currency: "EUR",
+      eventId: "evt-purchase",
+    });
+    expect(purchase.content_ids).toEqual([slugFr]);
+    expect(purchase.ecommerce).toMatchObject({
+      items: [{ item_id: mongoId }],
+    });
+    assertNoMongoContentIds(purchase);
+  });
+
+  it("omits content_ids when contentId is missing and does not use itemId", () => {
+    const view = buildViewItemEvent({
+      itemId: mongoId,
+      itemName: "Canapé",
+      price: 2590,
+    });
+    const cart = buildAddToCartEvent({
+      itemId: mongoId,
+      itemName: "Canapé",
+      price: 100,
+      quantity: 1,
+    });
+    const checkout = buildBeginCheckoutEvent({
+      value: 100,
+      items: [{ itemId: mongoId, itemName: "Canapé", price: 100, quantity: 1 }],
+    });
+    const purchase = buildPurchaseEvent({
+      transactionId: "tok-1",
+      value: 100,
+      items: [{ itemId: mongoId, itemName: "Canapé", price: 100, quantity: 1 }],
+    });
+
+    for (const event of [view, cart, checkout, purchase]) {
+      expect(event).not.toHaveProperty("content_ids");
+      expect(event.ecommerce).toMatchObject({
+        items: [{ item_id: mongoId }],
+      });
+      assertNoMongoContentIds(event);
+    }
+  });
+
+  it("omits content_ids when contentId is blank and does not use itemId", () => {
+    const view = buildViewItemEvent({
+      itemId: mongoId,
+      contentId: "   ",
+      itemName: "Canapé",
+      price: 2590,
+    });
+    const cart = buildAddToCartEvent({
+      itemId: mongoId,
+      contentId: "",
+      itemName: "Canapé",
+      price: 100,
+      quantity: 1,
+    });
+    const checkout = buildBeginCheckoutEvent({
+      value: 100,
+      items: [
+        {
+          itemId: mongoId,
+          contentId: "  ",
+          itemName: "Canapé",
+          price: 100,
+          quantity: 1,
+        },
+      ],
+    });
+    const purchase = buildPurchaseEvent({
+      transactionId: "tok-1",
+      value: 100,
+      items: [
+        {
+          itemId: mongoId,
+          contentId: "",
+          itemName: "Canapé",
+          price: 100,
+          quantity: 1,
+        },
+      ],
+    });
+
+    for (const event of [view, cart, checkout, purchase]) {
+      expect(event).not.toHaveProperty("content_ids");
+      expect(event.ecommerce).toMatchObject({
+        items: [{ item_id: mongoId }],
+      });
+      assertNoMongoContentIds(event);
+    }
+  });
+
+  it("keeps only slug.fr in content_ids when a cart mix includes a missing contentId", () => {
+    const checkout = buildBeginCheckoutEvent({
+      value: 749,
+      items: [
+        {
+          itemId: mongoId,
+          contentId: slugFr,
+          itemName: "Lit",
+          price: 649,
+          quantity: 1,
+        },
+        {
+          itemId: "507f191e810c19729de860ea",
+          itemName: "Table",
+          price: 100,
+          quantity: 1,
+        },
+      ],
+    });
+    expect(checkout.content_ids).toEqual([slugFr]);
+    expect(checkout.content_ids).not.toContain(mongoId);
+    expect(checkout.content_ids).not.toContain("507f191e810c19729de860ea");
+    expect(checkout.ecommerce).toMatchObject({
+      items: [{ item_id: mongoId }, { item_id: "507f191e810c19729de860ea" }],
+    });
   });
 });
 

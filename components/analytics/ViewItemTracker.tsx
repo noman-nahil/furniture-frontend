@@ -6,12 +6,19 @@ import { trackViewItem } from "@/lib/analytics/events";
 
 type Props = {
   itemId: string;
+  contentId?: string;
   itemName: string;
   price: number;
   currency: string;
 };
 
-export function ViewItemTracker({ itemId, itemName, price, currency }: Props) {
+export function ViewItemTracker({
+  itemId,
+  contentId,
+  itemName,
+  price,
+  currency,
+}: Props) {
   const { ready, canTrackMarketing } = useConsent();
   const lastKeyRef = useRef<string | null>(null);
 
@@ -20,8 +27,8 @@ export function ViewItemTracker({ itemId, itemName, price, currency }: Props) {
     const key = `${itemId}:${price}`;
     if (lastKeyRef.current === key) return;
     lastKeyRef.current = key;
-    trackViewItem({ itemId, itemName, price, currency });
-  }, [ready, canTrackMarketing, itemId, itemName, price, currency]);
+    trackViewItem({ itemId, contentId, itemName, price, currency });
+  }, [ready, canTrackMarketing, itemId, contentId, itemName, price, currency]);
 
   return null;
 }

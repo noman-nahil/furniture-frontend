@@ -6,6 +6,7 @@ import { pushDataLayer, type DataLayerEntry } from "./dataLayer";
 
 export type AnalyticsItem = {
   itemId: string;
+  contentId?: string;
   itemName: string;
   price: number;
   quantity: number;
@@ -13,6 +14,7 @@ export type AnalyticsItem = {
 
 export type ViewItemPayload = {
   itemId: string;
+  contentId?: string;
   itemName: string;
   price: number;
   currency?: string;
@@ -54,6 +56,20 @@ function toEcommerceItem(item: AnalyticsItem) {
     price: item.price,
     quantity: item.quantity,
   };
+}
+
+function toMetaContentId(item: { contentId?: string }): string | undefined {
+  const contentId = item.contentId?.trim();
+  return contentId || undefined;
+}
+
+function metaContentIds(
+  items: Array<{ contentId?: string }>,
+): string[] | undefined {
+  const ids = items
+    .map(toMetaContentId)
+    .filter((id): id is string => Boolean(id));
+  return ids.length > 0 ? ids : undefined;
 }
 
 function readSessionKey(key: string): string | null {
@@ -160,12 +176,13 @@ export function trackPageView(pagePath: string): void {
 
 export function buildViewItemEvent(payload: ViewItemPayload): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
+  const contentIds = metaContentIds([payload]);
   return withEventId({
     event: "view_item",
     currency,
     value: payload.price,
     content_type: "product",
-    content_ids: [payload.itemId],
+    ...(contentIds ? { content_ids: contentIds } : {}),
     content_name: payload.itemName,
     ecommerce: {
       currency,
@@ -189,12 +206,13 @@ export function trackViewItem(payload: ViewItemPayload): void {
 export function buildAddToCartEvent(payload: AddToCartPayload): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
   const value = payload.price * payload.quantity;
+  const contentIds = metaContentIds([payload]);
   return withEventId({
     event: "add_to_cart",
     currency,
     value,
     content_type: "product",
-    content_ids: [payload.itemId],
+    ...(contentIds ? { content_ids: contentIds } : {}),
     content_name: payload.itemName,
     ecommerce: {
       currency,
@@ -212,11 +230,12 @@ export function buildBeginCheckoutEvent(
   payload: BeginCheckoutPayload,
 ): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
+  const contentIds = metaContentIds(payload.items);
   return withEventId({
     event: "begin_checkout",
     currency,
     value: payload.value,
-    content_ids: payload.items.map((item) => item.itemId),
+    ...(contentIds ? { content_ids: contentIds } : {}),
     ecommerce: {
       currency,
       value: payload.value,
@@ -241,13 +260,14 @@ export function trackBeginCheckout(payload: BeginCheckoutPayload): void {
 
 export function buildPurchaseEvent(payload: PurchasePayload): DataLayerEntry {
   const currency = payload.currency ?? CURRENCY_CODE;
+  const contentIds = metaContentIds(payload.items);
   return withEventId(
     {
       event: "purchase",
       currency,
       value: payload.value,
       transaction_id: payload.transactionId,
-      content_ids: payload.items.map((item) => item.itemId),
+      ...(contentIds ? { content_ids: contentIds } : {}),
       ecommerce: {
         transaction_id: payload.transactionId,
         currency,
