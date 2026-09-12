@@ -5,6 +5,7 @@ import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
   socialImageUrl,
+  usableSeoText,
 } from "@/lib/seo/site";
 
 export type BuildPageMetadataInput = {
@@ -41,6 +42,7 @@ export function buildPageMetadata({
   noIndex = false,
   noFollow = false,
 }: BuildPageMetadataInput): Metadata {
+  const resolvedDescription = usableSeoText(description) ?? DEFAULT_DESCRIPTION;
   const canonical = absoluteUrl(path);
   const ogImageUrl = socialImageUrl(image);
   const ogImages = [
@@ -56,7 +58,7 @@ export function buildPageMetadata({
 
   return {
     title,
-    description,
+    description: resolvedDescription,
     ...(keywords?.length ? { keywords } : {}),
     alternates: {
       canonical,
@@ -67,13 +69,13 @@ export function buildPageMetadata({
       url: canonical,
       siteName: SITE_NAME,
       title,
-      description,
+      description: resolvedDescription,
       images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       title,
-      description,
+      description: resolvedDescription,
       images: [ogImageUrl],
     },
     ...(noIndex || noFollow

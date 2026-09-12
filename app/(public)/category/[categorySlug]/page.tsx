@@ -1,9 +1,10 @@
 import { cache } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { PaginatedProductGrid } from "@/components/products/PaginatedProductGrid";
 import type { ListProduct } from "@/components/products/PaginatedProductGrid";
-import { fetchCategoryBySlug } from "@/lib/seo/catalog";
+import { lookupActiveCategory } from "@/lib/seo/catalog";
 import {
   breadcrumbJsonLd,
   JsonLd,
@@ -42,7 +43,7 @@ type ProductsApiResponse = {
 // ─────────────────────────────────────────────
 
 const getCategory = cache(async (slug: string) => {
-  return fetchCategoryBySlug(slug);
+  return lookupActiveCategory(slug);
 });
 
 // ─────────────────────────────────────────────
@@ -62,17 +63,20 @@ function slugToTitle(slug: string): string {
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { categorySlug } = await params;
 
-  const category = await getCategory(categorySlug);
-  const title = category?.name ?? slugToTitle(categorySlug);
-  const description = `Shop ${title} — furniture and home décor at ${APP_NAME}.`;
+  const lookup = await getCategory(categorySlug);
+  if (lookup.state === "missing") notFound();
+
+  const title =
+    lookup.state === "found" ? lookup.value.name : slugToTitle(categorySlug);
+  const description = `Découvrez les ${title} — mobilier et décoration chez ${APP_NAME}.`;
 
   return buildPageMetadata({
     title,
     description,
     path: `/category/${categorySlug}`,
-    image: category?.image,
+    image: lookup.state === "found" ? lookup.value.image : undefined,
     imageAlt: title,
-    keywords: [title, "furniture", "home décor", APP_NAME],
+    keywords: [title, "meubles", "décoration", APP_NAME],
   });
 }
 
@@ -121,8 +125,11 @@ export default async function CategoryPage({
     totalPages = payload.totalPages ?? 1;
   }
 
-  const category = await getCategory(categorySlug);
-  const displayName = category?.name ?? slugToTitle(categorySlug);
+  const lookup = await getCategory(categorySlug);
+  if (lookup.state === "missing") notFound();
+
+  const displayName =
+    lookup.state === "found" ? lookup.value.name : slugToTitle(categorySlug);
 
   const emptyState = (
     <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center">

@@ -1,5 +1,6 @@
 import { cache } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { PaginatedProductGrid } from "@/components/products/PaginatedProductGrid";
 import type { ListProduct } from "@/components/products/PaginatedProductGrid";
@@ -75,13 +76,16 @@ export async function generateMetadata({
     fetchCategoryBySlug(categorySlug),
   ]);
 
-  const title = titles
-    ? `${titles.subcategory} · ${titles.category}`
+  if (titles.state === "missing") notFound();
+
+  const found = titles.state === "found" ? titles.value : null;
+  const title = found
+    ? `${found.subcategory} · ${found.category}`
     : slugToTitle(subcategorySlug);
 
-  const description = titles
-    ? `Browse ${titles.subcategory} in ${titles.category} at ${APP_NAME}.`
-    : `Browse furniture and décor at ${APP_NAME}.`;
+  const description = found
+    ? `Parcourez les ${found.subcategory} de la catégorie ${found.category} chez ${APP_NAME}.`
+    : `Parcourez le mobilier et la décoration chez ${APP_NAME}.`;
 
   return buildPageMetadata({
     title,
@@ -90,9 +94,9 @@ export async function generateMetadata({
     image: category?.image,
     imageAlt: title,
     keywords: [
-      titles?.subcategory ?? title,
-      titles?.category ?? categorySlug,
-      "furniture",
+      found?.subcategory ?? title,
+      found?.category ?? categorySlug,
+      "meubles",
       APP_NAME,
     ],
   });
@@ -143,8 +147,11 @@ export default async function SubcategoryPage({ params, searchParams }: PageProp
   //    generateMetadata. Now shares the same cache() call — one DB
   //    round-trip, real names used in both metadata and the h1/breadcrumb.
   const titles = await getSubcategoryTitles(categorySlug, subcategorySlug);
-  const catDisplay = titles?.category ?? slugToTitle(categorySlug);
-  const subDisplay = titles?.subcategory ?? slugToTitle(subcategorySlug);
+  if (titles.state === "missing") notFound();
+
+  const found = titles.state === "found" ? titles.value : null;
+  const catDisplay = found?.category ?? slugToTitle(categorySlug);
+  const subDisplay = found?.subcategory ?? slugToTitle(subcategorySlug);
 
   const emptyState = (
     <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center">

@@ -3,7 +3,9 @@ import {
   absoluteImageUrl,
   absoluteUrl,
   DEFAULT_DESCRIPTION,
+  productFallbackDescription,
   SITE_NAME,
+  usableSeoText,
 } from "@/lib/seo/site";
 
 type JsonLdValue = Record<string, unknown> | Record<string, unknown>[];
@@ -113,7 +115,8 @@ export function productJsonLd({
     "@context": "https://schema.org",
     "@type": "Product",
     name,
-    description: description || `Shop ${name} at ${APP_NAME}.`,
+    description:
+      usableSeoText(description) || productFallbackDescription(name),
     image: absoluteImages,
     url: absoluteUrl(path),
     brand: {

@@ -5,10 +5,14 @@ export { PRODUCTION_SITE_URL };
 
 export const SITE_NAME = APP_NAME;
 
-export const DEFAULT_TITLE = `${APP_NAME} — Premium Furniture & Home Décor`;
+export const DEFAULT_TITLE = `${APP_NAME} — Canapés, lits et mobilier`;
 
 export const DEFAULT_DESCRIPTION =
-  "Premium furniture and home décor. Discover curated pieces crafted for lasting elegance at Meubles De Paris.";
+  "Canapés, lits, chambres et meubles. Découvrez le mobilier et la décoration chez Meubles De Paris.";
+
+/** Single homepage H1 — commercial offering already described on about/shipping. */
+export const HOME_H1 =
+  "Meubles De Paris — Canapés, lits et meubles en Île-de-France";
 
 /** Local fallback social image (1200×630-friendly hero). Always absolute via metadataBase / absoluteUrl. */
 export const DEFAULT_OG_IMAGE_PATH = "/og-default.jpg";
@@ -17,19 +21,32 @@ export const DEFAULT_OG_IMAGE = {
   url: DEFAULT_OG_IMAGE_PATH,
   width: 1200,
   height: 630,
-  alt: `${APP_NAME} — Premium furniture and home décor`,
+  alt: `${APP_NAME} — Canapés, lits et mobilier`,
 } as const;
 
 export const SITE_KEYWORDS = [
-  "furniture",
-  "home décor",
-  "premium furniture",
-  "sofa",
-  "living room",
-  "bedroom",
+  "meubles",
+  "mobilier",
+  "décoration",
+  "canapé",
+  "lit",
+  "chambre",
   "Meubles De Paris",
   APP_NAME,
 ] as const;
+
+/** Treat blank / whitespace-only CMS strings as missing. */
+export function usableSeoText(value?: string | null): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/** Name-only fallback — does not invent features, prices, or locations. */
+export function productFallbackDescription(name: string): string {
+  const label = usableSeoText(name) ?? "ce meuble";
+  return `Découvrez ${label} chez ${SITE_NAME}.`;
+}
 
 function withHttps(hostOrUrl: string): string {
   return hostOrUrl.startsWith("http") ? hostOrUrl : `https://${hostOrUrl}`;

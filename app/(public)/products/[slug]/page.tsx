@@ -7,7 +7,7 @@ import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import ProductCard from "@/components/product/ProductCard";
 import ProductAddToCart from "@/components/product/ProductAddToCart";
 import ProductImageViewer from "@/components/product/ProductImageViewer";
-import { APP_NAME, CURRENCY_CODE } from "@/lib/config";
+import { CURRENCY_CODE } from "@/lib/config";
 import { ViewItemTracker } from "@/components/analytics/ViewItemTracker";
 import {
   discountBadgeLabel,
@@ -19,13 +19,14 @@ import {
   isProductNew,
 } from "@/lib/productPrice";
 import type { StoreProduct, LocalizedField } from "@/types/product";
-import { fetchProductBySlugOrId, plainDescription } from "@/lib/seo/catalog";
+import { fetchProductBySlugOrId } from "@/lib/seo/catalog";
 import {
   breadcrumbJsonLd,
   JsonLd,
   productJsonLd,
 } from "@/lib/seo/jsonLd";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { resolveProductJsonLdDescription, resolveProductPageSeo } from "@/lib/seo/productMeta";
 import { absoluteUrl } from "@/lib/seo/site";
 
 export const revalidate = 60;
@@ -92,53 +93,25 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
+  const resolved = resolveProductPageSeo(product, slug, LOCALE);
 
-  if (!product) {
-    return buildPageMetadata({
-      title: "Product not found",
-      description: `This product could not be found at ${APP_NAME}.`,
-      path: `/products/${slug}`,
-      noIndex: true,
-      noFollow: true,
-    });
-  }
-
-  const displayName = pickLocale(product.name);
-  const productSlug = pickLocale(product.slug) || slug;
-  const productPath = `/products/${productSlug}`;
-
-  const seoBlock = product.seo?.[LOCALE];
-  const title = seoBlock?.metaTitle || displayName;
-
-  const description =
-    seoBlock?.metaDescription ||
-    (product.description
-      ? plainDescription(pickLocale(product.description))
-      : `Shop ${displayName} — premium furniture and décor at ${APP_NAME}.`);
-
-  // Prefer admin SEO ogImage, then the product's main gallery image.
-  // socialImageUrl (via buildPageMetadata) serves a JPEG proxy so
-  // WhatsApp / Messenger / Facebook show the thumbnail (R2 WebP is dropped).
-  const rawOgImage = seoBlock?.ogImage || product.images?.[0];
-  const shouldNoIndex =
-    Boolean(product.noIndex) ||
-    Boolean(product.status && product.status !== "active");
+  if (resolved.missing) notFound();
 
   const meta = buildPageMetadata({
-    title,
-    description,
-    path: productPath,
-    image: rawOgImage,
-    imageAlt: displayName,
-    keywords: seoBlock?.keywords,
+    title: resolved.title,
+    description: resolved.description,
+    path: resolved.path,
+    image: resolved.image,
+    imageAlt: resolved.imageAlt,
+    keywords: resolved.keywords,
     type: "product",
-    noIndex: shouldNoIndex,
-    noFollow: shouldNoIndex,
+    noIndex: resolved.noIndex,
+    noFollow: resolved.noIndex,
   });
 
   // Allow an explicit absolute canonical override from admin SEO fields.
-  if (seoBlock?.canonicalUrl) {
-    const canonical = absoluteUrl(seoBlock.canonicalUrl);
+  if (resolved.canonicalOverride) {
+    const canonical = absoluteUrl(resolved.canonicalOverride);
     return {
       ...meta,
       alternates: { canonical },
@@ -201,7 +174,7 @@ export default async function ProductDetailPage({
 
   const productLd = productJsonLd({
     name: displayName,
-    description: displayDescription,
+    description: resolveProductJsonLdDescription(displayName, displayDescription),
     images: product.images,
     path: productPath,
     price: discounted ? final : product.price,

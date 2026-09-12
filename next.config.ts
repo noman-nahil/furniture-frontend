@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { wwwToApexRedirects } from "./lib/seo/wwwRedirect";
 
 // Read from .env — NOT hardcoded — so dev/staging/production can each point
 // at a different R2 bucket without touching this file or redeploying config.
@@ -30,6 +31,8 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // www → apex first so path rules like /shop run on the canonical host.
+      ...wwwToApexRedirects(),
       {
         source: "/sitemap_index.xml",
         destination: "/sitemap.xml",

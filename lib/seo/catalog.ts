@@ -151,14 +151,61 @@ export async function fetchCategoryNameBySlug(
   return categories.find((c) => c.slug === slug)?.name ?? null;
 }
 
+export type TaxonomyLookup<T> =
+  | { state: "unavailable" }
+  | { state: "missing" }
+  | { state: "found"; value: T };
+
+/** Match a category slug against an already-loaded active list. */
+export function findCategoryInList(
+  categories: CategoryNav[],
+  slug: string,
+): CategoryNav | undefined {
+  return categories.find((c) => c.slug === slug);
+}
+
+/**
+ * Resolve subcategory display names from an already-loaded list.
+ * Returns null when the category or subcategory does not exist — callers
+ * must 404 rather than invent a title from the slug.
+ */
+export function resolveSubcategoryFromList(
+  categories: CategoryNav[],
+  categorySlug: string,
+  subcategorySlug: string,
+): { category: string; subcategory: string } | null {
+  const cat = findCategoryInList(categories, categorySlug);
+  if (!cat) return null;
+
+  const want = subcategorySlug.toLowerCase();
+  const sub = cat.subcategories?.find((s) => {
+    const sl = (s.slug ?? "").toLowerCase();
+    return sl === want || slugify(s.name) === want;
+  });
+  if (!sub) return null;
+
+  return { category: cat.name, subcategory: sub.name };
+}
+
 /** Full category record (name + image) for OG metadata. */
 export async function fetchCategoryBySlug(
   slug: string,
   locale: Locale = DEFAULT_LOCALE,
 ): Promise<CategoryNav | null> {
+  const lookup = await lookupActiveCategory(slug, locale);
+  return lookup.state === "found" ? lookup.value : null;
+}
+
+/** Distinguish API failure from a slug that is not in the active taxonomy. */
+export async function lookupActiveCategory(
+  slug: string,
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<TaxonomyLookup<CategoryNav>> {
   const categories = await fetchActiveCategories(locale);
-  if (!categories) return null;
-  return categories.find((c) => c.slug === slug) ?? null;
+  if (!categories) return { state: "unavailable" };
+  const category = findCategoryInList(categories, slug);
+  if (!category) return { state: "missing" };
+  return { state: "found", value: category };
 }
 
 /** Active categories (+ nested subs) — used by sitemap + category OG. */
@@ -330,38 +377,31 @@ export async function fetchAllProductsForSitemap(
   return out;
 }
 
+export type SubcategoryTitlesLookup = TaxonomyLookup<{
+  category: string;
+  subcategory: string;
+}>;
+
 /**
  * Returns both the category and subcategory display names for a given
- * slug pair. Used in SubcategoryPage for metadata and h1/breadcrumb.
+ * slug pair. Missing taxonomy is `missing` (404); API failure is
+ * `unavailable` so a valid URL is not turned into a 404 during an outage.
  */
 export async function fetchSubcategoryTitles(
   categorySlug: string,
   subcategorySlug: string,
   locale: Locale = DEFAULT_LOCALE,
-): Promise<{ category: string; subcategory: string } | null> {
+): Promise<SubcategoryTitlesLookup> {
   const categories = await fetchActiveCategories(locale);
-  if (!categories) return null;
+  if (!categories) return { state: "unavailable" };
 
-  const cat = categories.find((c) => c.slug === categorySlug);
-  if (!cat) return null;
-
-  const want = subcategorySlug.toLowerCase();
-  const sub  = cat.subcategories?.find((s) => {
-    const sl = (s.slug ?? "").toLowerCase();
-    return sl === want || slugify(s.name) === want;
-  });
-
-  // If subcategory not found in DB, fall back gracefully to a humanised
-  // version of the slug rather than returning null — page still renders
-  // with a reasonable title even if the subcategory was recently renamed
-  // or deleted.
-  const subName =
-    sub?.name ??
-    subcategorySlug
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-  return { category: cat.name, subcategory: subName };
+  const titles = resolveSubcategoryFromList(
+    categories,
+    categorySlug,
+    subcategorySlug,
+  );
+  if (!titles) return { state: "missing" };
+  return { state: "found", value: titles };
 }
 
 // ─────────────────────────────────────────────

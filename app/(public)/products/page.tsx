@@ -40,18 +40,18 @@ export async function generateMetadata({
 
   if (search) {
     return buildPageMetadata({
-      title: `Search: ${search}`,
-      description: `Search results for "${search}" in our furniture and home décor catalog.`,
+      title: `Recherche : ${search}`,
+      description: `Résultats pour « ${search} » dans notre catalogue de meubles et de décoration.`,
       path: "/products",
       noIndex: true,
     });
   }
 
   return buildPageMetadata({
-    title: "All Products",
-    description: `Browse our full catalog of furniture and home décor at ${APP_NAME}.`,
+    title: "Tous les produits",
+    description: `Parcourez notre catalogue de meubles et de décoration chez ${APP_NAME}.`,
     path: "/products",
-    keywords: ["furniture catalog", "home décor", APP_NAME],
+    keywords: ["catalogue meubles", "décoration", APP_NAME],
   });
 }
 
