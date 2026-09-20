@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
-  HOME_H1,
   productFallbackDescription,
   SITE_KEYWORDS,
   socialImageUrl,
@@ -60,15 +59,14 @@ describe("French default SEO copy", () => {
 });
 
 describe("homepage H1", () => {
-  it("defines one French commercial heading used exactly once on the homepage", () => {
-    expect(HOME_H1).toContain("Meubles De Paris");
-    expect(HOME_H1).toMatch(/Canapés|lits|meubles/i);
-
+  it("does not render the commercial HOME_H1 on the homepage", () => {
     const homepage = readFileSync(
       path.resolve(__dirname, "../../app/(public)/page.tsx"),
       "utf8",
     );
-    expect(homepage.match(/<h1\b/g)).toHaveLength(1);
-    expect(homepage).toContain("{HOME_H1}");
+    expect(homepage).not.toContain("HOME_H1");
+    expect(homepage).not.toContain(
+      "Meubles De Paris — Canapés, lits et meubles en Île-de-France",
+    );
   });
 });

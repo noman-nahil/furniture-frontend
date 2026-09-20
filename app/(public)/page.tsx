@@ -11,7 +11,6 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
-  HOME_H1,
   SITE_KEYWORDS,
 } from "@/lib/seo/site";
 
@@ -211,12 +210,6 @@ export default function HomePage() {
       <Suspense fallback={<HeroCarouselSkeleton />}>
         <HeroCarouselSection />
       </Suspense>
-
-      <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 lg:pt-12 text-center">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
-          {HOME_H1}
-        </h1>
-      </header>
 
       <Suspense fallback={<CategoriesBrowseSkeleton />}>
         <CategoriesBrowseSection />

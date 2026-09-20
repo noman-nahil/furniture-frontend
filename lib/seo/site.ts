@@ -10,10 +10,6 @@ export const DEFAULT_TITLE = `${APP_NAME} — Canapés, lits et mobilier`;
 export const DEFAULT_DESCRIPTION =
   "Canapés, lits, chambres et meubles. Découvrez le mobilier et la décoration chez Meubles De Paris.";
 
-/** Single homepage H1 — commercial offering already described on about/shipping. */
-export const HOME_H1 =
-  "Meubles De Paris — Canapés, lits et meubles en Île-de-France";
-
 /** Local fallback social image (1200×630-friendly hero). Always absolute via metadataBase / absoluteUrl. */
 export const DEFAULT_OG_IMAGE_PATH = "/og-default.jpg";
 

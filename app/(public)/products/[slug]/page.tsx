@@ -92,8 +92,15 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProduct(slug);
-  const resolved = resolveProductPageSeo(product, slug, LOCALE);
+  const lookup = await getProduct(slug);
+  if (lookup.state === "unavailable") {
+    throw new Error("Product catalog is unavailable");
+  }
+  const resolved = resolveProductPageSeo(
+    lookup.state === "found" ? lookup.value : null,
+    slug,
+    LOCALE,
+  );
 
   if (resolved.missing) notFound();
 
@@ -135,8 +142,12 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await getProduct(slug);
-  if (!product) notFound();
+  const lookup = await getProduct(slug);
+  if (lookup.state === "unavailable") {
+    throw new Error("Product catalog is unavailable");
+  }
+  if (lookup.state === "missing") notFound();
+  const product = lookup.value;
 
   const displayName = pickLocale(product.name);
   const displayDescription = product.description ? pickLocale(product.description) : undefined;

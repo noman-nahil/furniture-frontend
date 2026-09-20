@@ -1,5 +1,9 @@
 import { cache } from "react";
-import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
+import {
+  serverFetch,
+  isServerFetchError,
+  type ServerFetchFailure,
+} from "@/lib/serverFetch";
 import type { StoreProduct, LocalizedField } from "@/types/product";
 import type { CategoryNav } from "@/types/categoryNav";
 import type { PublicHomepageSection } from "@/features/homepage-sections/types";
@@ -73,6 +77,25 @@ function extractProduct(res: unknown): ProductForMeta | null {
   return "name" in candidate ? (candidate as ProductForMeta) : null;
 }
 
+export type TaxonomyLookup<T> =
+  | { state: "unavailable" }
+  | { state: "missing" }
+  | { state: "found"; value: T };
+
+export type ProductLookup = TaxonomyLookup<ProductForMeta>;
+
+/** 404 from the API is a real miss; timeout/5xx/other failures are outages. */
+export function classifyCatalogFetchFailure(
+  res: Pick<ServerFetchFailure, "status">,
+): "missing" | "unavailable" {
+  return res.status === 404 ? "missing" : "unavailable";
+}
+
+/** Only 24-char hex strings are safe to send to GET /products/:id. */
+export function shouldLookupProductById(value: string): boolean {
+  return /^[a-f\d]{24}$/i.test(value);
+}
+
 // ─────────────────────────────────────────────
 // Product fetching
 // ─────────────────────────────────────────────
@@ -83,30 +106,42 @@ function extractProduct(res: unknown): ProductForMeta | null {
 async function loadProductBySlugOrId(
   id: string,
   locale: Locale = DEFAULT_LOCALE,
-): Promise<ProductForMeta | null> {
+): Promise<ProductLookup> {
   const slugRes = await serverFetch(`/products/slug/${id}?locale=${locale}`, {
     revalidate: 60,
   });
   if (!isServerFetchError(slugRes)) {
-    return extractProduct(slugRes);
+    const product = extractProduct(slugRes);
+    return product
+      ? { state: "found", value: product }
+      : { state: "missing" };
   }
 
-  // The id in the URL is usually a slug. Only try GET /products/:id when
-  // the slug route confirms the resource is missing (404). A 429/5xx/other
-  // 4xx must not spend a second rate-limit slot — the page should 404/fail
-  // rather than amplify origin load.
-  if (slugRes.status !== 404) {
-    return null;
+  // The URL param is usually a slug. Only try GET /products/:id for a real
+  // ObjectId — mongoose isValid() also accepts some 12-char strings, and a
+  // CastError would surface as 400 (unavailable) instead of a 404.
+  if (
+    classifyCatalogFetchFailure(slugRes) === "unavailable" ||
+    !shouldLookupProductById(id)
+  ) {
+    return classifyCatalogFetchFailure(slugRes) === "unavailable"
+      ? { state: "unavailable" }
+      : { state: "missing" };
   }
 
   const idRes = await serverFetch(`/products/${id}?locale=${locale}`, {
     revalidate: 60,
   });
   if (!isServerFetchError(idRes)) {
-    return extractProduct(idRes);
+    const product = extractProduct(idRes);
+    return product
+      ? { state: "found", value: product }
+      : { state: "missing" };
   }
 
-  return null;
+  return classifyCatalogFetchFailure(idRes) === "missing"
+    ? { state: "missing" }
+    : { state: "unavailable" };
 }
 
 /**
@@ -150,11 +185,6 @@ export async function fetchCategoryNameBySlug(
   if (!categories) return null;
   return categories.find((c) => c.slug === slug)?.name ?? null;
 }
-
-export type TaxonomyLookup<T> =
-  | { state: "unavailable" }
-  | { state: "missing" }
-  | { state: "found"; value: T };
 
 /** Match a category slug against an already-loaded active list. */
 export function findCategoryInList(
@@ -272,110 +302,6 @@ const RESERVED_SECTION_SLUGS = new Set([
   "returns-exchanges",
   "404",
 ]);
-
-type SitemapHomepageSection = {
-  slug?: string;
-  status?: string;
-  updatedAt?: string;
-  createdAt?: string;
-};
-
-/**
- * Active homepage sections for sitemap generation (`/{slug}` view-all pages).
- * Uses GET /homepage-sections (active-only) and skips invalid/reserved slugs.
- */
-export async function fetchActiveHomepageSectionsForSitemap(): Promise<
-  Array<{ slug: string; lastModified?: Date }>
-> {
-  const res = await serverFetch<SitemapHomepageSection[]>(
-    "/homepage-sections",
-    { revalidate: 3600 },
-  );
-
-  if (isServerFetchError(res) || !Array.isArray(res)) return [];
-
-  const out: Array<{ slug: string; lastModified?: Date }> = [];
-
-  for (const section of res) {
-    if (section.status && section.status !== "active") continue;
-
-    const slug = String(section.slug ?? "")
-      .trim()
-      .toLowerCase();
-    if (!slug || RESERVED_SECTION_SLUGS.has(slug)) continue;
-
-    const rawDate = section.updatedAt || section.createdAt;
-    out.push({
-      slug,
-      lastModified: rawDate ? new Date(rawDate) : undefined,
-    });
-  }
-
-  return out;
-}
-
-type SitemapProduct = {
-  slug: LocalizedField;
-  updatedAt?: string;
-  createdAt?: string;
-  noIndex?: boolean;
-  status?: string;
-};
-
-type ProductsListResponse = {
-  data?: SitemapProduct[];
-  total?: number;
-  totalPages?: number;
-  page?: number;
-};
-
-/**
- * Paginates the public product list for sitemap generation.
- * Max page size on the API is 100 — we walk every page.
- */
-export async function fetchAllProductsForSitemap(
-  locale: Locale = DEFAULT_LOCALE,
-): Promise<Array<{ slug: string; lastModified?: Date }>> {
-  const limit = 100;
-  const out: Array<{ slug: string; lastModified?: Date }> = [];
-  let page = 1;
-  let totalPages = 1;
-
-  while (page <= totalPages) {
-    const res = await serverFetch<ProductsListResponse>(
-      `/products?page=${page}&limit=${limit}&locale=${locale}`,
-      { revalidate: 3600 },
-    );
-
-    if (isServerFetchError(res) || !res || typeof res !== "object") break;
-
-    const payload = res as ProductsListResponse;
-    totalPages = Math.max(1, payload.totalPages ?? 1);
-    const rows = payload.data ?? [];
-
-    for (const product of rows) {
-      if (product.noIndex) continue;
-      if (product.status && product.status !== "active") continue;
-
-      const slug =
-        product.slug?.[locale] || product.slug?.fr || "";
-      if (!slug) continue;
-
-      const rawDate = product.updatedAt || product.createdAt;
-      out.push({
-        slug,
-        lastModified: rawDate ? new Date(rawDate) : undefined,
-      });
-    }
-
-    if (rows.length === 0) break;
-    page += 1;
-    // Safety cap — avoids infinite loops if the API misreports totalPages
-    if (page > 200) break;
-  }
-
-  return out;
-}
 
 export type SubcategoryTitlesLookup = TaxonomyLookup<{
   category: string;
