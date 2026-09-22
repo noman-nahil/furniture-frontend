@@ -8,9 +8,15 @@ export const LOGO_PATH = "/Logo.png";
 
 /**
  * Brand / production storefront origin (also set NEXT_PUBLIC_SITE_URL in env).
- * Current Next.js preview deploy: https://furniture-frontend-eosin.vercel.app
+ * Override with NEXT_PUBLIC_PRODUCTION_SITE_URL.
  */
-export const PRODUCTION_SITE_URL = "https://meublesdeparis.com";
+export const PRODUCTION_SITE_URL = (
+  process.env.NEXT_PUBLIC_PRODUCTION_SITE_URL ||
+  process.env.PRODUCTION_SITE_URL ||
+  "https://meublesdeparis.com"
+)
+  .trim()
+  .replace(/\/$/, "");
 
 /**
  * Currency code for Intl.NumberFormat

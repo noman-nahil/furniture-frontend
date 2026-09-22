@@ -1,7 +1,11 @@
 import { PRODUCTION_SITE_URL } from "../config";
 
 /** Production www host that must 301 to the apex canonical origin. */
-export const WWW_HOST = "www.meublesdeparis.com";
+export const WWW_HOST = (
+  process.env.NEXT_PUBLIC_WWW_HOST ||
+  process.env.WWW_HOST ||
+  "www.meublesdeparis.com"
+).trim();
 
 /**
  * Host-based www → apex redirects for next.config.

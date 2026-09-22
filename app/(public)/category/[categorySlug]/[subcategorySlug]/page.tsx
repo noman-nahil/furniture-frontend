@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { serverFetch, isServerFetchError } from "@/lib/serverFetch";
 import { PaginatedProductGrid } from "@/components/products/PaginatedProductGrid";
 import type { ListProduct } from "@/components/products/PaginatedProductGrid";
+import { PageBreadcrumbs } from "@/components/seo/PageBreadcrumbs";
 import {
   fetchCategoryBySlug,
   fetchSubcategoryTitles,
@@ -163,7 +164,7 @@ export default async function SubcategoryPage({ params, searchParams }: PageProp
     </div>
   );
 
-  const breadcrumbLd = breadcrumbJsonLd([
+  const crumbs = [
     { name: "Home", path: "/" },
     { name: "Categories", path: "/categories" },
     { name: catDisplay, path: `/category/${categorySlug}` },
@@ -171,12 +172,15 @@ export default async function SubcategoryPage({ params, searchParams }: PageProp
       name: subDisplay,
       path: `/category/${categorySlug}/${subcategorySlug}`,
     },
-  ]);
+  ];
+
+  const breadcrumbLd = breadcrumbJsonLd(crumbs);
 
   return (
     <>
       <JsonLd data={breadcrumbLd} />
       <div className="max-w-7xl mx-auto px-4 py-10">
+        <PageBreadcrumbs items={crumbs} />
         <div className="flex items-center justify-between gap-4 mb-8">
           <div>
             <p className="text-sm text-gray-500 mb-1">{catDisplay}</p>

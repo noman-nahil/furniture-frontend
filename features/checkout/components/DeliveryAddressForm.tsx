@@ -45,7 +45,7 @@ export function DeliveryAddressForm({ form, placeOrderError }: DeliveryAddressFo
             autoComplete="tel"
             value={values.phone}
             onChange={(e) => setField("phone", e.target.value)}
-            placeholder="01XXXXXXXXX"
+            placeholder="06 12 34 56 78"
             className={inputClass}
           />
         </div>
@@ -66,7 +66,7 @@ export function DeliveryAddressForm({ form, placeOrderError }: DeliveryAddressFo
         </div>
         <div>
           <label htmlFor="checkout-address" className={labelClass}>
-            Address (street / area)
+            Address
           </label>
           <input
             id="checkout-address"
@@ -75,14 +75,14 @@ export function DeliveryAddressForm({ form, placeOrderError }: DeliveryAddressFo
             autoComplete="street-address"
             value={values.address}
             onChange={(e) => setField("address", e.target.value)}
-            placeholder="House no, road, block"
+            placeholder="12 rue de Rivoli"
             className={inputClass}
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="checkout-city" className={labelClass}>
-              City / District
+              City
             </label>
             <input
               id="checkout-city"
@@ -91,13 +91,13 @@ export function DeliveryAddressForm({ form, placeOrderError }: DeliveryAddressFo
               autoComplete="address-level2"
               value={values.city}
               onChange={(e) => setField("city", e.target.value)}
-              placeholder="e.g. Dhaka"
+              placeholder="e.g. Paris"
               className={inputClass}
             />
           </div>
           <div>
             <label htmlFor="checkout-area" className={labelClass}>
-              Area (optional)
+              Neighborhood (optional)
             </label>
             <input
               id="checkout-area"
@@ -106,7 +106,7 @@ export function DeliveryAddressForm({ form, placeOrderError }: DeliveryAddressFo
               autoComplete="address-line2"
               value={values.area}
               onChange={(e) => setField("area", e.target.value)}
-              placeholder="e.g. Dhanmondi"
+              placeholder="e.g. Le Marais"
               className={inputClass}
             />
           </div>
