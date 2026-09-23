@@ -121,7 +121,7 @@ export default function ProductAddToCart({ product }: Props) {
             value={quantity}
             onChange={handleQuantityInput}
             disabled={disabled}
-            className="h-11 w-14 shrink-0 border-x border-gray-300 px-2 text-center text-base focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 sm:h-auto sm:w-16 sm:py-2 sm:text-base"
+            className="h-11 w-14 shrink-0 border-x border-gray-300 px-2 text-center text-base focus:outline-none focus:ring-2 focus:ring-teal-700 disabled:opacity-50 sm:h-auto sm:w-16 sm:py-2 sm:text-base"
             aria-label="Quantity"
           />
 
@@ -143,7 +143,7 @@ export default function ProductAddToCart({ product }: Props) {
           type="button"
           onClick={handleAddToCart}
           disabled={disabled}
-          className="min-h-11 w-full flex-1 rounded-lg bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:py-4 sm:text-lg"
+          className="min-h-11 w-full flex-1 rounded-lg bg-teal-700 px-8 py-3 text-base font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 sm:py-4 sm:text-lg"
         >
           {outOfStock ? "Out of Stock" : "Add to Cart"}
         </button>

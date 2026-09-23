@@ -161,11 +161,11 @@ function LoginContainer() {
     <div className="relative min-h-[50dvh] flex flex-col">
       {/* Ambient glow */}
       <div
-        className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-blue-500/10 blur-[100px] md:left-1/4"
+        className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-teal-700/10 blur-[100px] md:left-1/4"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-blue-500/5 blur-[100px] md:right-12"
+        className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-teal-700/5 blur-[100px] md:right-12"
         aria-hidden
       />
 
@@ -173,7 +173,7 @@ function LoginContainer() {
         <div className="relative p-8 sm:p-10 lg:p-12">
 
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-widest text-blue-500 md:hidden">
+            <p className="text-xs font-semibold uppercase tracking-widest text-teal-700 md:hidden">
               {APP_NAME}
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-gray-900">
@@ -203,7 +203,7 @@ function LoginContainer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-blue-500/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-teal-700/50 focus:bg-white focus:ring-2 focus:ring-teal-700/20 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -234,7 +234,7 @@ function LoginContainer() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-4 pr-12 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-blue-500/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-4 pr-12 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-teal-700/50 focus:bg-white focus:ring-2 focus:ring-teal-700/20 disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   type="button"
@@ -270,7 +270,7 @@ function LoginContainer() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition-all hover:shadow-xl hover:shadow-blue-900/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group relative w-full overflow-hidden rounded-2xl bg-teal-700 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-900/30 transition-all hover:bg-teal-800 hover:shadow-xl hover:shadow-teal-900/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="relative z-10">
                 {isSubmitting ? "Signing in…" : "Sign in"}
@@ -286,7 +286,7 @@ function LoginContainer() {
             New here?{" "}
             <Link
               href="/register"
-              className="font-medium text-blue-500 transition-colors hover:text-blue-400"
+              className="font-medium text-teal-700 transition-colors hover:text-teal-800"
             >
               Create an account
             </Link>

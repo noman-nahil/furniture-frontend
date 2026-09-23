@@ -332,7 +332,7 @@ type TriggerSource = "desktop" | "mobile";
   const categoriesButton = (
     <Link
       href="/categories"
-      className={`rounded-lg bg-teal-700 px-12 py-2 text-sm font-medium text-white transition-all duration-200 ${
+      className={`rounded-lg border border-teal-700 bg-teal-700 px-12 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-white hover:text-teal-700 ${
         isCategoriesActive ? "" : ""
       }`}
     >
@@ -343,12 +343,12 @@ type TriggerSource = "desktop" | "mobile";
   const cartLink = (
     <Link
       href="/cart"
-      className="relative rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-blue-600"
+      className="relative rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-teal-800"
       aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
     >
       <ShoppingCart className="h-6 w-6" aria-hidden />
       {cartItemCount > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-teal-700 text-xs font-bold text-white">
           {cartItemCount > 99 ? "99+" : cartItemCount}
         </span>
       )}
@@ -361,13 +361,13 @@ type TriggerSource = "desktop" | "mobile";
         <>
           <Link
             href="/login"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-teal-50 hover:text-teal-800"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-blue-700"
+            className="rounded-lg border border-teal-700 bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:text-teal-700"
           >
             Sign Up
           </Link>
@@ -376,7 +376,7 @@ type TriggerSource = "desktop" | "mobile";
         <>
           <Link
             href={user.dashboardRoute}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-teal-50 hover:text-teal-800"
           >
             Dashboard
           </Link>
@@ -412,8 +412,8 @@ type TriggerSource = "desktop" | "mobile";
             href={`/category/${cat.slug}`}
             className={`${CATEGORY_LINK_CLASS} ${
               active
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-700 hover:border-blue-600 hover:text-blue-600"
+                ? "border-teal-700 text-teal-800"
+                : "border-transparent text-gray-700 hover:border-teal-700 hover:text-teal-800"
             }`}
           >
             {cat.name}
@@ -444,8 +444,8 @@ type TriggerSource = "desktop" | "mobile";
           <div
             className={`flex items-center gap-1 border-b-2 pb-1 transition-colors duration-200 ${
               active
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-700 hover:border-blue-600 hover:text-blue-600"
+                ? "border-teal-700 text-teal-800"
+                : "border-transparent text-gray-700 hover:border-teal-700 hover:text-teal-800"
             }`}
           >
             <Link
@@ -515,7 +515,7 @@ type TriggerSource = "desktop" | "mobile";
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen((v) => !v)}
-              className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-blue-600"
+              className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-teal-800"
               aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMobileMenuOpen}
             >
@@ -567,34 +567,34 @@ type TriggerSource = "desktop" | "mobile";
           <div className="space-y-1 border-t border-gray-200 py-4 lg:hidden">
             <Link
               href={MAISON_HREF}
-              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-teal-50 hover:text-teal-800"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {MAISON_LABEL}
             </Link>
             <Link
               href="/products"
-              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-teal-50 hover:text-teal-800"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Products
             </Link>
             <Link
               href="/categories"
-              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+              className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-teal-50 hover:text-teal-800"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Categories
             </Link>
             <Link
               href="/cart"
-              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-teal-50 hover:text-teal-800"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <ShoppingCart className="h-4 w-4" aria-hidden />
               Cart
               {cartItemCount > 0 && (
-                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-bold text-white">
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-teal-700 px-1.5 text-xs font-bold text-white">
                   {cartItemCount > 99 ? "99+" : cartItemCount}
                 </span>
               )}
@@ -604,14 +604,14 @@ type TriggerSource = "desktop" | "mobile";
               <>
                 <Link
                   href="/login"
-                  className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+                  className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-teal-50 hover:text-teal-800"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700"
+                  className="block rounded-lg border border-teal-700 bg-teal-700 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-white hover:text-teal-700"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Sign Up
@@ -621,7 +621,7 @@ type TriggerSource = "desktop" | "mobile";
               <>
                 <Link
                   href={user.dashboardRoute}
-                  className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600"
+                  className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-teal-50 hover:text-teal-800"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard

@@ -66,7 +66,7 @@ export default function ProductImageSection({
               }}
               className={`cursor-pointer border rounded-lg overflow-hidden ${
                 i === current
-                  ? "border-blue-500"
+                  ? "border-teal-700"
                   : "border-gray-200"
               }`}
             >
