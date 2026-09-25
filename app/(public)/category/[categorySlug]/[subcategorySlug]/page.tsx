@@ -55,14 +55,6 @@ const getSubcategoryTitles = cache(
 );
 
 // ─────────────────────────────────────────────
-// Fallback: slug → readable title
-// ─────────────────────────────────────────────
-
-function slugToTitle(slug: string): string {
-  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// ─────────────────────────────────────────────
 // Metadata
 // ─────────────────────────────────────────────
 
@@ -77,16 +69,14 @@ export async function generateMetadata({
     fetchCategoryBySlug(categorySlug),
   ]);
 
+  if (titles.state === "unavailable") {
+    throw new Error("Category catalog is unavailable");
+  }
   if (titles.state === "missing") notFound();
 
-  const found = titles.state === "found" ? titles.value : null;
-  const title = found
-    ? `${found.subcategory} · ${found.category}`
-    : slugToTitle(subcategorySlug);
-
-  const description = found
-    ? `Parcourez les ${found.subcategory} de la catégorie ${found.category} chez ${APP_NAME}.`
-    : `Parcourez le mobilier et la décoration chez ${APP_NAME}.`;
+  const { subcategory, category: categoryName } = titles.value;
+  const title = `${subcategory} · ${categoryName}`;
+  const description = `Parcourez les ${subcategory} de la catégorie ${categoryName} chez ${APP_NAME}.`;
 
   return buildPageMetadata({
     title,
@@ -94,12 +84,7 @@ export async function generateMetadata({
     path: `/category/${categorySlug}/${subcategorySlug}`,
     image: category?.image,
     imageAlt: title,
-    keywords: [
-      found?.subcategory ?? title,
-      found?.category ?? categorySlug,
-      "meubles",
-      APP_NAME,
-    ],
+    keywords: [subcategory, categoryName, "meubles", APP_NAME],
   });
 }
 
@@ -143,16 +128,16 @@ export default async function SubcategoryPage({ params, searchParams }: PageProp
     totalPages = payload.totalPages ?? 1;
   }
 
-  // ✅ Fixed: page previously called slugToTitle() for display names,
-  //    ignoring the real category/subcategory names already fetched in
-  //    generateMetadata. Now shares the same cache() call — one DB
-  //    round-trip, real names used in both metadata and the h1/breadcrumb.
+  // Same cache() call as generateMetadata, so both use one taxonomy lookup.
+  // Display names come from that confirmed result, for the h1 and breadcrumbs.
   const titles = await getSubcategoryTitles(categorySlug, subcategorySlug);
+  if (titles.state === "unavailable") {
+    throw new Error("Category catalog is unavailable");
+  }
   if (titles.state === "missing") notFound();
 
-  const found = titles.state === "found" ? titles.value : null;
-  const catDisplay = found?.category ?? slugToTitle(categorySlug);
-  const subDisplay = found?.subcategory ?? slugToTitle(subcategorySlug);
+  const catDisplay = titles.value.category;
+  const subDisplay = titles.value.subcategory;
 
   const emptyState = (
     <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center">

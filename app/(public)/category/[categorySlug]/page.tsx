@@ -48,16 +48,6 @@ const getCategory = cache(async (slug: string) => {
 });
 
 // ─────────────────────────────────────────────
-// Slug → display name (used in both metadata and h1)
-// ─────────────────────────────────────────────
-
-function slugToTitle(slug: string): string {
-  return slug
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// ─────────────────────────────────────────────
 // Metadata
 // ─────────────────────────────────────────────
 
@@ -65,17 +55,19 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const { categorySlug } = await params;
 
   const lookup = await getCategory(categorySlug);
+  if (lookup.state === "unavailable") {
+    throw new Error("Category catalog is unavailable");
+  }
   if (lookup.state === "missing") notFound();
 
-  const title =
-    lookup.state === "found" ? lookup.value.name : slugToTitle(categorySlug);
+  const title = lookup.value.name;
   const description = `Découvrez les ${title} — mobilier et décoration chez ${APP_NAME}.`;
 
   return buildPageMetadata({
     title,
     description,
     path: `/category/${categorySlug}`,
-    image: lookup.state === "found" ? lookup.value.image : undefined,
+    image: lookup.value.image,
     imageAlt: title,
     keywords: [title, "meubles", "décoration", APP_NAME],
   });
@@ -127,10 +119,12 @@ export default async function CategoryPage({
   }
 
   const lookup = await getCategory(categorySlug);
+  if (lookup.state === "unavailable") {
+    throw new Error("Category catalog is unavailable");
+  }
   if (lookup.state === "missing") notFound();
 
-  const displayName =
-    lookup.state === "found" ? lookup.value.name : slugToTitle(categorySlug);
+  const displayName = lookup.value.name;
 
   const emptyState = (
     <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center">
