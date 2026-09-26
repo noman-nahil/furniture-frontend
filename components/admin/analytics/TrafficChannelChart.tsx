@@ -33,7 +33,11 @@ export function TrafficChannelChart({ data }: { data: AnalyticsChannelRow[] }) {
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
       <h3 className="mb-6 text-sm font-semibold text-slate-50">Traffic overview</h3>
       <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 480, height: 288 }}
+        >
           <BarChart
             data={data}
             layout="vertical"
