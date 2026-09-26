@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <div className="w-full max-w-[420px]">{children}</div>;
 }
